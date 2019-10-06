@@ -2,7 +2,7 @@ import pygame, bombescii, stages
 from pygame.locals import *
 
 pygame.init()
-bombescii.screen = pygame.display.set_mode((800, 800))
+bombescii.screen = pygame.display.set_mode((832, 832))
 pygame.display.set_caption("Bombescii")
 
 bombescii.stage = stages.MainMenu()

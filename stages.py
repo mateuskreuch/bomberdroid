@@ -1,6 +1,7 @@
 import bombescii
+from matrixes import Matrix
 
-class Stage():
+class Stage:
    def update(self, dt):
       pass
 
@@ -19,3 +20,13 @@ class MainMenu(Stage):
 
    def draw(self):
       bombescii.screen.blit(self._bg, (0, 0))
+
+class Arena(Stage):
+   WIDTH  = 2*6 + 3
+   HEIGHT = 2*5 + 3
+
+   def __init(self):
+      self._tiles = Matrix(self.WIDTH, self.HEIGHT)
+
+
+
