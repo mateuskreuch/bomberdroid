@@ -1,5 +1,5 @@
 import bombescii
-from matrixes import Matrix
+from game_structs import Matrix
 
 class Stage:
    def update(self, dt):

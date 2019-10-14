@@ -2,7 +2,6 @@ import pygame, bombescii, stages
 from pygame.locals import *
 
 pygame.init()
-bombescii.screen = pygame.display.set_mode((832, 832))
 pygame.display.set_caption("Bombescii")
 
 bombescii.stage = stages.MainMenu()
@@ -28,6 +27,8 @@ while running:
       bombescii.stage.draw()
       bombescii.stage.update(dt / 1000)
 
+   scaled = pygame.transform.scale(bombescii.screen, bombescii.window.get_size())
+   bombescii.window.blit(scaled, (0, 0))
    pygame.display.flip()
 
 pygame.quit()
