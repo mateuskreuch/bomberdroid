@@ -2,17 +2,10 @@ import bombescii
 from game_structs import Matrix
 
 class Stage:
-   def update(self, dt):
-      pass
-
-   def draw(self):
-      pass
-
-   def key_pressed(self, key):
-      pass
-
-   def key_released(self, key):
-      pass
+   def update(self, dt):        pass
+   def draw(self):              pass
+   def key_pressed(self, key):  pass
+   def key_released(self, key): pass
 
 class MainMenu(Stage):
    def __init__(self):
@@ -22,11 +15,5 @@ class MainMenu(Stage):
       bombescii.screen.blit(self._bg, (0, 0))
 
 class Arena(Stage):
-   WIDTH  = 2*6 + 3
-   HEIGHT = 2*5 + 3
-
    def __init(self):
-      self._tiles = Matrix(self.WIDTH, self.HEIGHT)
-
-
-
+      self._tiles = Matrix(bombescii.MAP_SIZE.x, bombescii.MAP_SIZE.y)
