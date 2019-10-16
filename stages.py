@@ -1,5 +1,9 @@
-import bombescii
-from game_structs import Matrix
+# this file contains the stages of the game
+# stages are also commonly known as states or screens, and is basically a piece
+# of the game
+
+import gm, tobjs
+from structs import Matrix
 
 class Stage:
    def update(self, dt):        pass
@@ -9,11 +13,14 @@ class Stage:
 
 class MainMenu(Stage):
    def __init__(self):
-      self._bg = bombescii.new_image("gfx/tile_brick.png")
+      self._bg = gm.new_image("gfx/tile_grass.png")
 
    def draw(self):
-      bombescii.screen.blit(self._bg, (0, 0))
+      gm.screen.blit(self._bg, (0, 0))
 
 class Arena(Stage):
-   def __init(self):
-      self._tiles = Matrix(bombescii.MAP_SIZE.x, bombescii.MAP_SIZE.y)
+   def __init__(self):
+      self._tiles = Matrix(gm.MAP_SIZE.x, gm.MAP_SIZE.y)
+      self.tttt = 4
+
+teste = Arena()

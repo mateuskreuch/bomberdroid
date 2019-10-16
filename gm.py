@@ -1,6 +1,9 @@
+# this file is the game manager
+# it's responsible for globals (helper functions, constants, etc)
+
 import os, pygame
 from pygame.locals import *
-from game_structs import Vector
+from structs import Vector
 
 DIR = os.path.abspath("")
 
