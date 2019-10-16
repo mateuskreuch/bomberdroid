@@ -4,6 +4,7 @@
 
 import gm, tobjs
 from structs import Matrix
+from tiles import *
 
 class Stage:
    def update(self, dt):        pass
@@ -21,6 +22,16 @@ class MainMenu(Stage):
 class Arena(Stage):
    def __init__(self):
       self._tiles = Matrix(gm.MAP_SIZE.x, gm.MAP_SIZE.y)
-      self.tttt = 4
 
-teste = Arena()
+      for x, y, _ in self._tiles:
+         self._tiles.set(x, y, (
+            self._tiles.is_inside(x - 1, y - 1) and
+            self._tiles.is_inside(x + 1, y + 1) and
+            (x % 2 == 1 or y % 2 == 1))
+            and TlGrass()
+            or  TlBrick())
+
+   def draw(self):
+      for x, y, value in self._tiles:
+         if value is not None:
+            gm.screen.blit(value.sprite, (x * gm.TILE_SIZE, y * gm.TILE_SIZE))

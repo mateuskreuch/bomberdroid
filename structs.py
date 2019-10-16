@@ -29,6 +29,9 @@ class Matrix:
    def set(self, x, y, value = None):
       self._elms[y * self.cols + x] = value
 
+   def is_inside(self, x, y):
+      return x >= 0 and y >= 0 and x < self.cols and y < self.rows
+
    def __iter__(self):
       x = y = 0
 

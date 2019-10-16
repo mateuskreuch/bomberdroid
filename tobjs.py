@@ -4,4 +4,3 @@
 
 class Tobj:
    x = y = 0
-
