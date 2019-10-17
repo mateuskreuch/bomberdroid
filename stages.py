@@ -22,6 +22,7 @@ class MainMenu(Stage):
 class Arena(Stage):
    def __init__(self):
       self._tiles = Matrix(gm.MAP_SIZE.x, gm.MAP_SIZE.y)
+      self._player = gm.new_image("gfx/player.png")
 
       for x, y, _ in self._tiles:
          self._tiles.set(x, y, (
@@ -35,3 +36,5 @@ class Arena(Stage):
       for x, y, value in self._tiles:
          if value is not None:
             gm.screen.blit(value.sprite, (x * gm.TILE_SIZE, y * gm.TILE_SIZE))
+            
+      gm.screen.blit(self._player, (32, 32))

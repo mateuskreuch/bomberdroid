@@ -18,16 +18,14 @@ while running:
       if event.type == QUIT:
          running = False
 
-      elif gm.stage is not None:
-         if event.type == KEYDOWN:
-            gm.stage.key_pressed(event.key)
-         
-         elif event.type == KEYUP:
-            gm.stage.key_released(event.key)
+      elif event.type == KEYDOWN:
+         gm.stage.key_pressed(event.key)
+      
+      elif event.type == KEYUP:
+         gm.stage.key_released(event.key)
 
-   if gm.stage is not None:
-      gm.stage.draw()
-      gm.stage.update(dt / 1000)
+   gm.stage.draw()
+   gm.stage.update(dt / 1000)
 
    scaled = pygame.transform.scale(gm.screen, gm.window.get_size())
    gm.window.blit(scaled, (0, 0))

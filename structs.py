@@ -13,7 +13,7 @@ class Vector:
    def __str__(self):
       return "(%s, %s)" % (self.x, self.y)
    
-   def totuple(self):
+   def unpack(self):
       return (self.x, self.y)
 
 class Matrix:

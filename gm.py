@@ -14,8 +14,8 @@ MAP_SIZE    = Vector(2*6 + 3, 2*5 + 3)
 SCREEN_SIZE = MAP_SIZE * TILE_SIZE
 WINDOW_SIZE = SCREEN_SIZE * PIXEL_SCALE
 
-window = pygame.display.set_mode(WINDOW_SIZE.totuple())
-screen = pygame.Surface(SCREEN_SIZE.totuple())
+window = pygame.display.set_mode(WINDOW_SIZE.unpack())
+screen = pygame.Surface(SCREEN_SIZE.unpack())
 stage  = None
 
 def new_image(path):
