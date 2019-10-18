@@ -2,39 +2,46 @@
 # stages are also commonly known as states or screens, and is basically a piece
 # of the game
 
-import gm, tobjs
-from structs import Matrix
+import gm
+from pygame.locals import *
+from structs import *
 from tiles import *
 
 class Stage:
-   def update(self, dt):        pass
-   def draw(self):              pass
-   def key_pressed(self, key):  pass
-   def key_released(self, key): pass
+   def on_update(self, dt):            pass
+   def on_draw(self):                  pass
+   def on_key_event(self, key, state): pass
 
 class MainMenu(Stage):
-   def __init__(self):
-      self._bg = gm.new_image("gfx/tile_grass.png")
-
-   def draw(self):
-      gm.screen.blit(self._bg, (0, 0))
+   pass
 
 class Arena(Stage):
    def __init__(self):
-      self._tiles = Matrix(gm.MAP_SIZE.x, gm.MAP_SIZE.y)
-      self._player = gm.new_image("gfx/player.png")
+      self.tmap = Tensor(gm.MAP_SIZE.x, gm.MAP_SIZE.y, 2)
 
-      for x, y, _ in self._tiles:
-         self._tiles.set(x, y, (
-            self._tiles.is_inside(x - 1, y - 1) and
-            self._tiles.is_inside(x + 1, y + 1) and
-            (x % 2 == 1 or y % 2 == 1))
-            and TlGrass()
-            or  TlBrick())
+      for x, y, z, _ in self.tmap:
+         if z == 0:
+            self.tmap.set(x, y, z, TlGrass(x, y, z))
+         
+         elif x == 0 or y == 0 or x == self.tmap.cols - 1 or y == self.tmap.rows - 1 or (x % 2 == 0 and y % 2 == 0):
+            self.tmap.set(x, y, z, TlBrick(x, y, z))
 
-   def draw(self):
-      for x, y, value in self._tiles:
-         if value is not None:
-            gm.screen.blit(value.sprite, (x * gm.TILE_SIZE, y * gm.TILE_SIZE))
-            
-      gm.screen.blit(self._player, (32, 32))
+      self.tmap.set(1, 1, 1, TlPlayer(1, 1, 1,
+         Axis((K_d, 1), (K_a, -1)),
+         Axis((K_s, 1), (K_w, -1))
+         ))
+
+   def on_update(self, dt):
+      for x, y, z, tile in self.tmap:
+         if tile is not None:
+            tile.on_update(dt)
+   
+   def on_key_event(self, key, state):
+      for x, y, z, tile in self.tmap:
+         if tile is not None:
+            tile.on_key_event(key, state)
+
+   def on_draw(self):
+      for x, y, z, tile in self.tmap:
+         if tile is not None:
+            tile.on_draw()
