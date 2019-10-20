@@ -3,7 +3,7 @@
 
 import os, pygame
 from pygame.locals import *
-from structs import Vector
+from structs       import Vector
 
 DIR = os.path.abspath("")
 

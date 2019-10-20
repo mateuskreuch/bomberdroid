@@ -6,84 +6,80 @@ class Vector:
       self.x = x
       self.y = y
 
-   def __mul__(self, othr):
-      try:    return Vector(self.x * othr.x, self.y * othr.y)
-      except: return Vector(self.x * othr  , self.y * othr  )
+   def __mul__(self, other):
+      try:    
+         return Vector(self.x * other.x, self.y * other.y)
+
+      except AttributeError: 
+         return Vector(self.x * other, self.y * other)
 
    def __str__(self):
-      return "(%s, %s)" % (self.x, self.y)
+      return "v(%s, %s)" % (self.x, self.y)
+
+   #
    
    def unpack(self):
       return (self.x, self.y)
 
-class Matrix:
-   def __init__(self, w, h):
-      self.cols = w
-      self.rows = h
-      
-      self._elms = [None] * (w * h)
-   
-   def get(self, x, y):
-      return self._elms[y * self.cols + x]
-
-   def set(self, x, y, value = None):
-      self._elms[y * self.cols + x] = value
-
-   def move(self, x0, y0, x1, y1):
-      self._elms[y1 * self.cols + x1] = self._elms[y0 * self.cols + x0]
-      self._elms[y0 * self.cols + x0] = None
-
-   def is_inside(self, x, y):
-      return x >= 0 and y >= 0 and x < self.cols and y < self.rows
-
-   def __iter__(self):
-      x = y = 0
-
-      while y < self.rows:
-         yield x, y, self._elms[y * self.cols + x]
-
-         x += 1
-
-         if x >= self.cols:
-            x = 0
-            y += 1
-
-class Tensor:
+class TileMap:
    def __init__(self, w, h, z):
       self.cols = w
       self.rows = h
       self.lyrs = z
 
-      self._elms = [None] * (w * h * z)
+      self._elms = [None] * (w*h*z)
+
+   def __iter__(self):
+      return (k for k in self._elms if k != None)
+
+   #
    
    def get(self, x, y, z):
-      return self._elms[z * self.rows * self.cols + y * self.cols + x]
+      return self._elms[z*self.cols*self.rows + y*self.cols + x]
+
+   def place(self, tile):
+      self._elms[tile.z*self.cols*self.rows +
+                 tile.y*self.cols           +
+                 tile.x                     ] = tile
+
+   def place_if_possible(self, tile):
+      dest = self.get(tile.x, tile.y, tile.z)
+
+      if dest is None or dest.can_be_replaced_by(tile):
+         self.place(tile)
+
+   def remove(self, tile_or_x, y = None, z = None):
+      try:
+         self._elms[tile_or_x.z*self.cols*self.rows +
+                    tile_or_x.y*self.cols           +
+                    tile_or_x.x                     ] = None
+
+      except AttributeError:
+         self._elms[z*self.cols*self.rows +
+                    y*self.cols           +
+                    tile_or_x             ] = None
    
-   def set(self, x, y, z, value = None):
-      self._elms[z * self.rows * self.cols + y * self.cols + x] = value
+   def traverse(self):
+      return ((x, y, z) for z in range(self.lyrs) 
+                        for y in range(self.rows) 
+                        for x in range(self.cols))
 
-   def move(self, x0, y0, z0, x1, y1, z1):
-      self._elms[z1 * self.rows * self.cols + y1 * self.cols + x1] = self._elms[z0 * self.rows * self.cols + y0 * self.cols + x0]
-      self._elms[z0 * self.rows * self.cols + y0 * self.cols + x0] = None
-   
-   def is_inside(self, x, y, z = 0):
-      return x >= 0 and y >= 0 and z >= 0 and x < self.cols and y < self.rows and z < self.lyrs
-   
-   def __iter__(self):
-      x = y = z = 0
-
-      while z < self.lyrs:
-         yield x, y, z, self._elms[z * self.rows * self.cols + y * self.cols + x]
-
-         x += 1
-
-         if x >= self.cols:
-            x = 0
-            y += 1
-
-            if y >= self.rows:
-               y = 0
-               z += 1
+   def is_inbounds(self, tile_or_x, y = None, z = 0):
+      try:
+         return tile_or_x.x >= 0        and \
+                tile_or_x.y >= 0        and \
+                tile_or_x.z >= 0        and \
+                tile_or_x.x < self.cols and \
+                tile_or_x.y < self.rows and \
+                tile_or_x.z < self.lyrs
+      
+      except AttributeError:
+         return tile_or_x >= 0        and \
+                y         >= 0        and \
+                z         >= 0        and \
+                tile_or_x < self.cols and \
+                y         < self.rows and \
+                z         < self.lyrs
 
 class Axis:
    def __init__(self, *keys):
@@ -92,11 +88,39 @@ class Axis:
       self._counter = [0, 0]
       self._keys    = {key: sign for key, sign in keys}
 
+   #
+
    def react_to_key(self, key, state):
       if key in self._keys:
          if   self._keys[key] > 0: self._counter[0] += state
          elif self._keys[key] < 0: self._counter[1] += state
 
-         if   self._counter[0] and not self._counter[1]: self.value = 1
+         if   self._counter[0] and not self._counter[1]: self.value =  1
          elif self._counter[1] and not self._counter[0]: self.value = -1
-         else:                                           self.value = 0
+         else                                          : self.value =  0
+
+"""
+class Matrix:
+   def __init__(self, w, h):
+      self.cols = w
+      self.rows = h
+      
+      self._elms = [None] * (w * h)
+
+   def __iter__(self):
+      return (
+         (x, y, self.get(x, y))
+         for y in range(self.rows)
+         for x in range(self.cols))
+
+   #
+   
+   def get(self, x, y):
+      return self._elms[y * self.cols + x]
+
+   def set(self, x, y, value = None):
+      self._elms[y * self.cols + x] = value
+
+   def is_inside(self, x, y):
+      return x >= 0 and y >= 0 and x < self.cols and y < self.rows 
+"""
