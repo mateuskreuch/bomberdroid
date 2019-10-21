@@ -4,7 +4,7 @@
 
 import random
 from pygame.locals import *
-from lib           import TileMap, Axis
+from lib           import TileMap
 from tiles         import *
 
 class Stage:
@@ -30,15 +30,19 @@ class Arena(Stage):
       
          elif random.random() <= 0.1:
             self.map.place(TlBomb(x, y, z))
-            
+         
+         elif random.random() <= 0.1:
+            self.map.place(TlRuPass(x, y, z))
 
       self.map.place(
          TlPlayer(1, 1, 1,
+            Image("gfx/player.png"),
             Axis((K_d, 1), (K_a, -1)),
             Axis((K_s, 1), (K_w, -1))))
 
       self.map.place(
          TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
+            Image("gfx/player2.png"),
             Axis((K_RIGHT, 1), (K_LEFT, -1)),
             Axis((K_DOWN, 1), (K_UP, -1))))
 

@@ -3,8 +3,15 @@
 import os, pygame
 
 class Image:
+   _cache = {}
+
    def __init__(self, path):
-      self._surface = pygame.image.load(os.path.join(DIR, path)).convert_alpha()
+      try:
+         self._surface = self._cache[path]
+         
+      except KeyError:
+         self._surface = pygame.image.load(os.path.join(DIR, path)).convert_alpha()
+         self._cache[path] = self._surface
    
    #
 

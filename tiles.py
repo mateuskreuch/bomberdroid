@@ -1,7 +1,7 @@
 # this file contains all tiles
 
 import lib, stages
-from lib import Image
+from lib import Image, Axis
 
 class Tile:
    sprite = Image("gfx/tile_missing.png")
@@ -50,17 +50,20 @@ class TlConcrete(Tile):
 class TlBomb(Tile):
    sprite = Image("gfx/tile_bomb.png")
 
+class TlRuPass(Tile):
+   sprite = Image("gfx/tile_rupass.png")
+
+   def can_be_overriden_by(self, tile):
+      return True
+
 class TlPlayer(Tile):
-   sprite = Image("gfx/player.png")
-
-   #
-
-   def __init__(self, x, y, z, h_axis, v_axis):
+   def __init__(self, x, y, z, img, h_axis, v_axis):
       self.x      = x
       self.y      = y
       self.z      = z
       self.h_axis = h_axis
       self.v_axis = v_axis
+      self.sprite = img
 
       self._last_moved_at = 0
 
