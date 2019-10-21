@@ -37,6 +37,23 @@ class TileMap:
    def get(self, x, y, z):
       return self._elms[z*self.cols*self.rows + y*self.cols + x]
 
+   def is_inbounds(self, tile_or_x, y = None, z = 0):
+      try:
+         return tile_or_x.x >= 0        and \
+                tile_or_x.y >= 0        and \
+                tile_or_x.z >= 0        and \
+                tile_or_x.x < self.cols and \
+                tile_or_x.y < self.rows and \
+                tile_or_x.z < self.lyrs
+      
+      except AttributeError:
+         return tile_or_x >= 0        and \
+                y         >= 0        and \
+                z         >= 0        and \
+                tile_or_x < self.cols and \
+                y         < self.rows and \
+                z         < self.lyrs
+
    def place(self, tile):
       self._elms[tile.z*self.cols*self.rows +
                  tile.y*self.cols           +
@@ -58,28 +75,11 @@ class TileMap:
          self._elms[z*self.cols*self.rows +
                     y*self.cols           +
                     tile_or_x             ] = None
-   
+
    def traverse(self):
       return ((x, y, z) for z in range(self.lyrs) 
                         for y in range(self.rows) 
                         for x in range(self.cols))
-
-   def is_inbounds(self, tile_or_x, y = None, z = 0):
-      try:
-         return tile_or_x.x >= 0        and \
-                tile_or_x.y >= 0        and \
-                tile_or_x.z >= 0        and \
-                tile_or_x.x < self.cols and \
-                tile_or_x.y < self.rows and \
-                tile_or_x.z < self.lyrs
-      
-      except AttributeError:
-         return tile_or_x >= 0        and \
-                y         >= 0        and \
-                z         >= 0        and \
-                tile_or_x < self.cols and \
-                y         < self.rows and \
-                z         < self.lyrs
 
 class Axis:
    def __init__(self, *keys):

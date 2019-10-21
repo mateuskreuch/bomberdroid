@@ -43,8 +43,11 @@ class Tile:
 class TlGrass(Tile): 
    sprite = gm.new_image("gfx/tile_grass.png")
 
-class TlBrick(Tile):
-   sprite = gm.new_image("gfx/tile_brick.png")
+class TlConcrete(Tile):
+   sprite = gm.new_image("gfx/tile_concrete.png")
+
+class TlBomb(Tile):
+   sprite = gm.new_image("gfx/tile_bomb.png")
 
 class TlPlayer(Tile):
    sprite = gm.new_image("gfx/player.png")
