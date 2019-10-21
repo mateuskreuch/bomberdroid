@@ -1,5 +1,15 @@
-# this file contains general data structures
-# they simply assist and facilitate overall game development
+# this file contains data structures, wrappers and helper functions
+
+import os, pygame
+
+class Image:
+   def __init__(self, path):
+      self._surface = pygame.image.load(os.path.join(DIR, path)).convert_alpha()
+   
+   #
+
+   def draw(self, x, y):
+      screen.blit(self._surface, (x, y))
 
 class Vector:
    def __init__(self, x, y):
@@ -98,6 +108,18 @@ class Axis:
          if   self._counter[0] and not self._counter[1]: self.value =  1
          elif self._counter[1] and not self._counter[0]: self.value = -1
          else                                          : self.value =  0
+
+DIR = os.path.abspath("")
+
+PIXEL_SCALE = 2
+TILE_SIZE   = 32
+
+MAP_SIZE    = Vector(2*6 + 3, 2*5 + 3)
+SCREEN_SIZE = MAP_SIZE * TILE_SIZE
+WINDOW_SIZE = SCREEN_SIZE * PIXEL_SCALE
+
+window = pygame.display.set_mode(WINDOW_SIZE.unpack())
+screen = pygame.Surface(SCREEN_SIZE.unpack())
 
 """
 class Matrix:

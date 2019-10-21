@@ -1,12 +1,12 @@
 # this file is the entry point of the game
 
-import pygame, gm, stages
+import pygame, lib, stages
 from pygame.locals import *
 
 pygame.init()
 pygame.display.set_caption("Bombescii")
 
-gm.stage = stages.Arena()
+stages.current = stages.Arena()
 
 clock   = pygame.time.Clock()
 running = True
@@ -19,16 +19,16 @@ while running:
          running = False
 
       elif event.type == KEYDOWN:
-         gm.stage.on_key_event(event.key, 1)
+         stages.current.on_key_event(event.key, 1)
       
       elif event.type == KEYUP:
-         gm.stage.on_key_event(event.key, -1)
+         stages.current.on_key_event(event.key, -1)
 
-   gm.stage.on_draw()
-   gm.stage.on_update(dt / 1000)
+   stages.current.on_draw()
+   stages.current.on_update(dt / 1000)
 
-   scaled = pygame.transform.scale(gm.screen, gm.window.get_size())
-   gm.window.blit(scaled, (0, 0))
+   scaled = pygame.transform.scale(lib.screen, lib.window.get_size())
+   lib.window.blit(scaled, (0, 0))
    pygame.display.flip()
 
 pygame.quit()

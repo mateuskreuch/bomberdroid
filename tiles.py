@@ -1,9 +1,10 @@
 # this file contains all tiles
 
-import gm
+import lib, stages
+from lib import Image
 
 class Tile:
-   sprite = gm.new_image("gfx/tile_missing.png")
+   sprite = Image("gfx/tile_missing.png")
    x = y = z = 0
 
    #
@@ -19,38 +20,38 @@ class Tile:
    def on_key_event(self, key, state): pass
    def on_move_attempt(self, tile)   : pass
    def on_draw(self):
-      gm.screen.blit(self.sprite, (self.x * gm.TILE_SIZE, self.y * gm.TILE_SIZE))
+      self.sprite.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE)
 
    #
 
    def move_to(self, x, y):
-      dest = gm.stage.tmap.get(x, y, self.z)
+      dest = stages.current.map.get(x, y, self.z)
 
       if dest is not None:
          dest.on_move_attempt(self)
-
-         dest = gm.stage.tmap.get(x, y, self.z)
+         
+         dest = stages.current.map.get(x, y, self.z)
 
       if dest is None or dest.can_be_overriden_by(self):
-         gm.stage.tmap.remove(self)
+         stages.current.map.remove(self)
          self.x = x
          self.y = y
-         gm.stage.tmap.place(self)
+         stages.current.map.place(self)
 
    def can_be_overriden_by(self, tile):
       return False
 
 class TlGrass(Tile): 
-   sprite = gm.new_image("gfx/tile_grass.png")
+   sprite = Image("gfx/tile_grass.png")
 
 class TlConcrete(Tile):
-   sprite = gm.new_image("gfx/tile_concrete.png")
+   sprite = Image("gfx/tile_concrete.png")
 
 class TlBomb(Tile):
-   sprite = gm.new_image("gfx/tile_bomb.png")
+   sprite = Image("gfx/tile_bomb.png")
 
 class TlPlayer(Tile):
-   sprite = gm.new_image("gfx/player.png")
+   sprite = Image("gfx/player.png")
 
    #
 
