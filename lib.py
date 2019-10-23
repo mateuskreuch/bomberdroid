@@ -10,13 +10,42 @@ class Image:
          self._surface = self._cache[path]
          
       except KeyError:
-         self._surface = pygame.image.load(os.path.join(DIR, path)).convert_alpha()
+         self._surface = pygame.image.load(os.path.join(DIR, path)) \
+                         .convert_alpha()
+
          self._cache[path] = self._surface
    
    #
 
    def draw(self, x, y):
       screen.blit(self._surface, (x, y))
+
+class AnimatedImage(Image):
+   SLOWNESS = 3
+
+   def __init__(self, *paths):
+      self._at_frame  = 0
+      self._max_frame = len(paths)
+      self._surfaces  = []
+
+      for path in paths:
+         try:
+            self._surfaces.append(self._cache[path])
+            
+         except KeyError:
+            self._surfaces.append(pygame.image.load(os.path.join(DIR, path))
+                                  .convert_alpha())
+
+            self._cache[path] = self._surfaces[-1]
+
+   def draw(self, x, y):
+      screen.blit(self._surfaces[self._at_frame // self.SLOWNESS], (x, y))
+
+      if self._at_frame < self._max_frame * self.SLOWNESS - 1:
+         self._at_frame += 1
+
+   def get_completion(self):
+      return self._at_frame / (self._max_frame - 1) / self.SLOWNESS
 
 class Vector:
    def __init__(self, x, y):
@@ -79,8 +108,11 @@ class TileMap:
    def place_if_possible(self, tile):
       dest = self.get(tile.x, tile.y, tile.z)
 
-      if dest is None or dest.can_be_replaced_by(tile):
+      if dest is None or dest.on_destroy_attempt(tile):
          self.place(tile)
+         return True
+      
+      return False
 
    def remove(self, tile_or_x, y = None, z = None):
       try:

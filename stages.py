@@ -28,23 +28,27 @@ class Arena(Stage):
               (x % 2 == 0 and y % 2 == 0):
             self.map.place(TlConcrete(x, y, z))
       
-         elif random.random() <= 0.1:
-            self.map.place(TlBomb(x, y, z))
-         
-         elif random.random() <= 0.1:
-            self.map.place(TlRuPass(x, y, z))
+         elif random.random() <= 0.6:
+            self.map.place(TlBrick(x, y, z))
+
+      self.map.remove(2, 1, 1)
+      self.map.remove(1, 2, 1)
+      self.map.remove(self.map.cols - 3, self.map.rows - 2, 1)
+      self.map.remove(self.map.cols - 2, self.map.rows - 3, 1)
 
       self.map.place(
          TlPlayer(1, 1, 1,
             Image("gfx/player.png"),
             Axis((K_d, 1), (K_a, -1)),
-            Axis((K_s, 1), (K_w, -1))))
+            Axis((K_s, 1), (K_w, -1)),
+            K_b))
 
       self.map.place(
          TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
             Image("gfx/player2.png"),
             Axis((K_RIGHT, 1), (K_LEFT, -1)),
-            Axis((K_DOWN, 1), (K_UP, -1))))
+            Axis((K_DOWN, 1), (K_UP, -1)),
+            K_KP3))
 
    #
    
