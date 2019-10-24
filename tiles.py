@@ -134,7 +134,7 @@ class TlExplosion(Tile):
          stages.current.map.remove(self)
 
    def on_destroy_attempt(self, tile):
-      return self._sprite.get_completion() >= 0.33
+      return True
 
 class TlPlayer(Tile):
    def __init__(self, x, y, z, img, h_axis, v_axis, bomb_key):
@@ -150,6 +150,12 @@ class TlPlayer(Tile):
       self._placed_bomb = False
 
    #
+
+   def on_destroy_attempt(self, tile):
+      if isinstance(tile, TlExplosion):
+         return True
+      
+      return False
    
    def on_update(self, dt):
       self._last_moved_at += dt
