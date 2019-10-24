@@ -1,6 +1,6 @@
 # this file contains all tiles
 
-import lib, stages
+import lib, stages, random
 from lib import Image, AnimatedImage, Axis
 
 class Tile:
@@ -37,35 +37,35 @@ class Tile:
       
       return False
 
+class BreakableTile(Tile):
+   def on_destroy_attempt(self, tile):
+      if isinstance(tile, TlExplosion):
+         stages.current.map.remove(self)
+         stages.current.map.place(TlBroken(self.x, self.y, self.z))
+
+      return False
+
 class TlGrass(Tile):
    _sprite = Image("gfx/grass.png")
 
 class TlConcrete(Tile):
    _sprite = Image("gfx/concrete.png")
 
-class TlBrick(Tile):
+class TlBrick(BreakableTile):
    _sprite = Image("gfx/brick.png")
 
-   #
-
-   def on_destroy_attempt(self, tile):
-      if isinstance(tile, TlExplosion):
-         stages.current.map.remove(self)
-
-      return False
-
+class TlBush(BreakableTile):
+   _sprite = Image("gfx/bush.png")
+   
 class TlBomb(Tile):
-   def __init__(self, x, y, z, strength = 2, seconds_to_explode = 2):
+   def __init__(self, x, y, z, strength = 2):
       super().__init__(x, y, z)
 
-      sprs  = ["gfx/bomb_%d.png" % k for k in range(8)]
-      isprs = ["gfx/bomb_%d.png" % k for k in reversed(range(8))]
+      a = ["gfx/bomb_%d.png" % k for k in range(8)]
+      b = list(reversed(a))
 
-      self._sprite = AnimatedImage(*(sprs + isprs + sprs + isprs + sprs))
-
+      self._sprite   = AnimatedImage(*(a + b + a + b + a))
       self._strength = strength
-      self._seconds_to_explode = seconds_to_explode
-      self._time_counter = 0
 
    #
 
@@ -93,6 +93,25 @@ class TlBomb(Tile):
          for y in range(1, self._strength + 1):
             if not stages.current.map.place_if_possible(TlExplosion(self.x, self.y + y*k, self.z)):
                break
+
+class TlBroken(Tile):
+   def __init__(self, x, y, z):
+      super().__init__(x, y, z)
+
+      self._sprite = AnimatedImage(*("gfx/broken_%d.png" % k for k in range(4)))
+
+   #
+   
+   def on_update(self, dt):
+      if self._sprite.get_completion() >= 1:
+         stages.current.map.remove(self)
+
+         if random.random() <= 0.5:
+            chance = random.random()
+            items  = 1
+
+            if chance <= 1 / items:
+               stages.current.map.place(TlRuPass(self.x, self.y, self.z))
 
 class TlRuPass(Tile):
    _sprite = Image("gfx/ru_pass.png")

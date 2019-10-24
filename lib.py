@@ -47,26 +47,6 @@ class AnimatedImage(Image):
    def get_completion(self):
       return self._at_frame / (self._max_frame - 1) / self.SLOWNESS
 
-class Vector:
-   def __init__(self, x, y):
-      self.x = x
-      self.y = y
-
-   def __mul__(self, other):
-      try:    
-         return Vector(self.x * other.x, self.y * other.y)
-
-      except AttributeError: 
-         return Vector(self.x * other, self.y * other)
-
-   def __str__(self):
-      return "v(%s, %s)" % (self.x, self.y)
-
-   #
-   
-   def unpack(self):
-      return (self.x, self.y)
-
 class TileMap:
    def __init__(self, w, h, z):
       self.cols = w
@@ -150,38 +130,15 @@ class Axis:
 
 DIR = os.path.abspath("")
 
-PIXEL_SCALE = 2
-TILE_SIZE   = 32
+PIXEL_SCALE   = 2
+TILE_SIZE     = 32
 
-MAP_SIZE    = Vector(2*6 + 3, 2*5 + 3)
-SCREEN_SIZE = MAP_SIZE * TILE_SIZE
-WINDOW_SIZE = SCREEN_SIZE * PIXEL_SCALE
+MAP_SIZE_Y    = 2*5 + 3
+MAP_SIZE_X    = 2*6 + 3
+SCREEN_SIZE_X = MAP_SIZE_X * TILE_SIZE
+SCREEN_SIZE_Y = MAP_SIZE_Y * TILE_SIZE
+WINDOW_SIZE_X = SCREEN_SIZE_X * PIXEL_SCALE
+WINDOW_SIZE_Y = SCREEN_SIZE_Y * PIXEL_SCALE
 
-window = pygame.display.set_mode(WINDOW_SIZE.unpack())
-screen = pygame.Surface(SCREEN_SIZE.unpack())
-
-"""
-class Matrix:
-   def __init__(self, w, h):
-      self.cols = w
-      self.rows = h
-      
-      self._elms = [None] * (w * h)
-
-   def __iter__(self):
-      return (
-         (x, y, self.get(x, y))
-         for y in range(self.rows)
-         for x in range(self.cols))
-
-   #
-   
-   def get(self, x, y):
-      return self._elms[y * self.cols + x]
-
-   def set(self, x, y, value = None):
-      self._elms[y * self.cols + x] = value
-
-   def is_inside(self, x, y):
-      return x >= 0 and y >= 0 and x < self.cols and y < self.rows 
-"""
+window = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
+screen = pygame.Surface((SCREEN_SIZE_X, SCREEN_SIZE_Y))

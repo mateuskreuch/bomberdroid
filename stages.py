@@ -17,25 +17,39 @@ class MainMenu(Stage):
 
 class Arena(Stage):
    def __init__(self):
-      self.map = TileMap(lib.MAP_SIZE.x, lib.MAP_SIZE.y, 2)
+      self.map = TileMap(lib.MAP_SIZE_X, lib.MAP_SIZE_Y, 2)
 
       for x, y, z in self.map.traverse():
          if z == 0:
             self.map.place(TlGrass(x, y, z))
          
-         elif x == 0                  or y == 0                  or \
+         elif x == 0                 or y == 0                  or \
               x == self.map.cols - 1 or y == self.map.rows - 1 or \
               (x % 2 == 0 and y % 2 == 0):
             self.map.place(TlConcrete(x, y, z))
       
          elif random.random() <= 0.6:
-            self.map.place(TlBrick(x, y, z))
+            if random.random() <= 0.5:
+               self.map.place(TlBrick(x, y, z))
+            else:
+               self.map.place(TlBush(x, y, z))
 
-      self.map.remove(2, 1, 1)
-      self.map.remove(1, 2, 1)
-      self.map.remove(self.map.cols - 3, self.map.rows - 2, 1)
-      self.map.remove(self.map.cols - 2, self.map.rows - 3, 1)
+      self._place_players()
 
+   #
+   
+   def on_draw(self):
+      for tile in self.map: tile.on_draw()
+
+   def on_key_event(self, key, state):
+      for tile in self.map: tile.on_key_event(key, state)
+
+   def on_update(self, dt):
+      for tile in self.map: tile.on_update(dt)
+
+   #
+
+   def _place_players(self):
       self.map.place(
          TlPlayer(1, 1, 1,
             Image("gfx/player.png"),
@@ -50,15 +64,13 @@ class Arena(Stage):
             Axis((K_DOWN, 1), (K_UP, -1)),
             K_KP3))
 
-   #
-   
-   def on_draw(self):
-      for tile in self.map: tile.on_draw()
+      self.map.remove(2, 1, 1)
+      self.map.remove(1, 2, 1)
+      self.map.remove(self.map.cols - 3, self.map.rows - 2, 1)
+      self.map.remove(self.map.cols - 2, self.map.rows - 3, 1)
 
-   def on_key_event(self, key, state):
-      for tile in self.map: tile.on_key_event(key, state)
+class GrassArena(Arena):
+   pass
 
-   def on_update(self, dt):
-      for tile in self.map: tile.on_update(dt)
 
 current = None
