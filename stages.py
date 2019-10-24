@@ -1,6 +1,5 @@
 # this file contains the stages of the game
-# stages are also commonly known as states or screens, and is basically a piece
-# of the game
+# stages are also commonly known as states or screens
 
 import random
 from pygame.locals import *
@@ -16,27 +15,19 @@ class MainMenu(Stage):
    pass
 
 class Arena(Stage):
+   GEN_NOISE = 0.6
+
+   #
+
    def __init__(self):
       self.map = TileMap(lib.MAP_SIZE_X, lib.MAP_SIZE_Y, 2)
 
-      for x, y, z in self.map.traverse():
-         if z == 0:
-            self.map.place(TlGrass(x, y, z))
-         
-         elif x == 0                 or y == 0                  or \
-              x == self.map.cols - 1 or y == self.map.rows - 1 or \
-              (x % 2 == 0 and y % 2 == 0):
-            self.map.place(TlConcrete(x, y, z))
-      
-         elif random.random() <= 0.6:
-            if random.random() <= 0.5:
-               self.map.place(TlBrick(x, y, z))
-            else:
-               self.map.place(TlBush(x, y, z))
-
+      self.on_generation()
       self._place_players()
 
    #
+
+   def on_generation(self): pass
    
    def on_draw(self):
       for tile in self.map: tile.on_draw()
@@ -49,7 +40,25 @@ class Arena(Stage):
 
    #
 
+   def _is_border_tile(self, x, y):
+      return x == 0                 or y == 0                 or \
+             x == self.map.cols - 1 or y == self.map.rows - 1 or \
+             (x % 2 == 0 and y % 2 == 0)
+
+   def _is_lock_tile(self, x, y):
+      return (x == 3                 and y == 1                ) or \
+             (x == 1                 and y == 3                ) or \
+             (x == self.map.cols - 4 and y == self.map.rows - 2) or \
+             (x == self.map.cols - 2 and y == self.map.rows - 4)
+
    def _place_players(self):
+      self.map.remove(1, 1, 1)
+      self.map.remove(2, 1, 1)
+      self.map.remove(1, 2, 1)
+      self.map.remove(self.map.cols - 2, self.map.rows - 2, 1)
+      self.map.remove(self.map.cols - 3, self.map.rows - 2, 1)
+      self.map.remove(self.map.cols - 2, self.map.rows - 3, 1)
+
       self.map.place(
          TlPlayer(1, 1, 1,
             Image("gfx/player.png"),
@@ -64,13 +73,23 @@ class Arena(Stage):
             Axis((K_DOWN, 1), (K_UP, -1)),
             K_KP3))
 
-      self.map.remove(2, 1, 1)
-      self.map.remove(1, 2, 1)
-      self.map.remove(self.map.cols - 3, self.map.rows - 2, 1)
-      self.map.remove(self.map.cols - 2, self.map.rows - 3, 1)
-
 class GrassArena(Arena):
-   pass
+   BREAKABLE_TILES = [
+      TlBrick,
+      TlBush
+   ]
 
+   #
+
+   def on_generation(self):
+      for x, y, z in self.map.traverse():
+         if z == 0:
+            self.map.place(TlGrass(x, y, z))
+         
+         elif self._is_border_tile(x, y):
+            self.map.place(TlConcrete(x, y, z))
+      
+         elif random.random() <= self.GEN_NOISE or self._is_lock_tile(x, y):
+            self.map.place(random.choice(self.BREAKABLE_TILES)(x, y, z))
 
 current = None

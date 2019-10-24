@@ -1,4 +1,4 @@
-# this file contains data structures, wrappers and helper functions
+# this file contains general classes, data structures and constants
 
 import os, pygame
 
@@ -21,12 +21,13 @@ class Image:
       screen.blit(self._surface, (x, y))
 
 class AnimatedImage(Image):
-   SLOWNESS = 3
+   SECONDS_PER_FRAME = 0.05
 
    def __init__(self, *paths):
-      self._at_frame  = 0
-      self._max_frame = len(paths)
-      self._surfaces  = []
+      self._time_counter = 0
+      self._at_frame     = 0
+      self._max_frame    = len(paths)
+      self._surfaces     = []
 
       for path in paths:
          try:
@@ -38,14 +39,19 @@ class AnimatedImage(Image):
 
             self._cache[path] = self._surfaces[-1]
 
-   def draw(self, x, y):
-      screen.blit(self._surfaces[self._at_frame // self.SLOWNESS], (x, y))
+   def update(self, dt):
+      self._time_counter += dt
 
-      if self._at_frame < self._max_frame * self.SLOWNESS - 1:
+      if  self._time_counter >= self.SECONDS_PER_FRAME \
+      and self._at_frame < self._max_frame - 1:
+         self._time_counter = 0
          self._at_frame += 1
 
+   def draw(self, x, y):
+      screen.blit(self._surfaces[self._at_frame], (x, y))
+
    def get_completion(self):
-      return self._at_frame / (self._max_frame - 1) / self.SLOWNESS
+      return self._at_frame / (self._max_frame - 1)
 
 class TileMap:
    def __init__(self, w, h, z):

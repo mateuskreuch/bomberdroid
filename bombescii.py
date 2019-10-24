@@ -6,7 +6,7 @@ from pygame.locals import *
 pygame.init()
 pygame.display.set_caption("Bombescii")
 
-stages.current = stages.Arena()
+stages.current = stages.GrassArena()
 
 clock   = pygame.time.Clock()
 running = True

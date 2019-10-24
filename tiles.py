@@ -56,6 +56,23 @@ class TlBrick(BreakableTile):
 
 class TlBush(BreakableTile):
    _sprite = Image("gfx/bush.png")
+
+class TlExplosion(Tile):
+   def __init__(self, x, y, z):
+      super().__init__(x, y, z)
+
+      self._sprite = AnimatedImage(*("gfx/explosion_%d.png" % k for k in range(12)))
+
+   #
+
+   def on_update(self, dt):
+      self._sprite.update(dt)
+
+      if self._sprite.get_completion() >= 1:
+         stages.current.map.remove(self)
+
+   def on_destroy_attempt(self, tile):
+      return True
    
 class TlBomb(Tile):
    def __init__(self, x, y, z, strength = 2):
@@ -70,6 +87,8 @@ class TlBomb(Tile):
    #
 
    def on_update(self, dt):
+      self._sprite.update(dt)
+
       if self._sprite.get_completion() >= 1:
          self.explode()
 
@@ -94,25 +113,6 @@ class TlBomb(Tile):
             if not stages.current.map.place_if_possible(TlExplosion(self.x, self.y + y*k, self.z)):
                break
 
-class TlBroken(Tile):
-   def __init__(self, x, y, z):
-      super().__init__(x, y, z)
-
-      self._sprite = AnimatedImage(*("gfx/broken_%d.png" % k for k in range(4)))
-
-   #
-   
-   def on_update(self, dt):
-      if self._sprite.get_completion() >= 1:
-         stages.current.map.remove(self)
-
-         if random.random() <= 0.5:
-            chance = random.random()
-            items  = 1
-
-            if chance <= 1 / items:
-               stages.current.map.place(TlRuPass(self.x, self.y, self.z))
-
 class TlRuPass(Tile):
    _sprite = Image("gfx/ru_pass.png")
 
@@ -121,20 +121,30 @@ class TlRuPass(Tile):
    def on_destroy_attempt(self, tile):
       return True
 
-class TlExplosion(Tile):
-   def __init__(self, x, y, z):
-      super().__init__(x, y, z)
-
-      self._sprite = AnimatedImage(*("gfx/explosion_%d.png" % k for k in range(12)))
+class TlBroken(Tile):
+   DROP_CHANCE = 0.5
+   DROPS = [
+      TlRuPass
+   ]
 
    #
 
+   def __init__(self, x, y, z):
+      super().__init__(x, y, z)
+
+      self._sprite = AnimatedImage(*("gfx/broken_%d.png" % k for k in range(4)))
+
+   #
+   
    def on_update(self, dt):
+      self._sprite.update(dt)
+
       if self._sprite.get_completion() >= 1:
          stages.current.map.remove(self)
 
-   def on_destroy_attempt(self, tile):
-      return True
+         if random.random() <= self.DROP_CHANCE:
+            drop = random.choice(self.DROPS)
+            stages.current.map.place(drop(self.x, self.y, self.z))
 
 class TlPlayer(Tile):
    def __init__(self, x, y, z, img, h_axis, v_axis, bomb_key):
