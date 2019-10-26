@@ -1,7 +1,7 @@
 # this file contains all tiles
 
 import lib, stages, random
-from lib import Image, AnimatedImage, Axis
+from lib import Image, Animation, Axis
 
 class Tile:
    _sprite = Image("gfx/missing.png")
@@ -40,7 +40,6 @@ class Tile:
 class BreakableTile(Tile):
    def on_destroy_attempt(self, tile):
       if isinstance(tile, TlExplosion):
-         stages.current.map.remove(self)
          stages.current.map.place(TlBroken(self.x, self.y, self.z))
 
       return False
@@ -61,7 +60,7 @@ class TlExplosion(Tile):
    def __init__(self, x, y, z):
       super().__init__(x, y, z)
 
-      self._sprite = AnimatedImage(*("gfx/explosion_%d.png" % k for k in range(12)))
+      self._sprite = Animation("gfx/explosion_%d.png" % k for k in range(12))
 
    #
 
@@ -79,9 +78,9 @@ class TlBomb(Tile):
       super().__init__(x, y, z)
 
       a = ["gfx/bomb_%d.png" % k for k in range(8)]
-      b = list(reversed(a))
+      z = list(reversed(a))
 
-      self._sprite   = AnimatedImage(*(a + b + a + b + a))
+      self._sprite   = Animation(a + z + a + z + a)
       self._strength = strength
 
    #
@@ -101,16 +100,12 @@ class TlBomb(Tile):
    #
 
    def explode(self):
-      stages.current.map.remove(self)
       stages.current.map.place(TlExplosion(self.x, self.y, self.z))
 
-      for k in (-1, 1):
-         for x in range(1, self._strength + 1):
-            if not stages.current.map.place_if_possible(TlExplosion(self.x + x*k, self.y, self.z)):
-               break
-
-         for y in range(1, self._strength + 1):
-            if not stages.current.map.place_if_possible(TlExplosion(self.x, self.y + y*k, self.z)):
+      for ix, iy in ((0, -1), (-1, 0), (0, 1), (1, 0)):
+         for i in range(1, self._strength + 1):
+            if not stages.current.map.place_attempt(
+            TlExplosion(self.x + i*ix, self.y + i*iy, self.z)):
                break
 
 class TlRuPass(Tile):
@@ -132,7 +127,7 @@ class TlBroken(Tile):
    def __init__(self, x, y, z):
       super().__init__(x, y, z)
 
-      self._sprite = AnimatedImage(*("gfx/broken_%d.png" % k for k in range(4)))
+      self._sprite = Animation("gfx/broken_%d.png" % k for k in range(4))
 
    #
    
@@ -147,17 +142,16 @@ class TlBroken(Tile):
             stages.current.map.place(drop(self.x, self.y, self.z))
 
 class TlPlayer(Tile):
-   def __init__(self, x, y, z, img, h_axis, v_axis, bomb_key):
+   def __init__(self, x, y, z, img, axis, bomb_key):
       self.x      = x
       self.y      = y
       self.z      = z
-      self._h_axis = h_axis
-      self._v_axis = v_axis
-      self._bomb_key = bomb_key
-      self._sprite = img
-
+      
+      self._axis          = axis
+      self._bomb_key      = bomb_key
+      self._sprite        = img
       self._last_moved_at = 0
-      self._placed_bomb = False
+      self._to_put_bomb   = False
 
    #
 
@@ -170,20 +164,22 @@ class TlPlayer(Tile):
    def on_update(self, dt):
       self._last_moved_at += dt
 
-      if self._last_moved_at >= 0.2:
-         dx = self._h_axis.value
-         dy = self._v_axis.value
+      if self._last_moved_at >= 0.2 and (self._axis.dir_x or self._axis.dir_y):
+         self._last_moved_at = 0
 
-         if dx or dy:
-            self._last_moved_at = 0
+         moved = self.move_to(self.x + self._axis.dir_x, 
+                              self.y + self._axis.dir_y)
 
-            if self.move_to(self.x + dx, self.y + dy) and self._placed_bomb:
-               stages.current.map.place(TlBomb(self.x - dx, self.y - dy, self.z, 2))
-               self._placed_bomb = False
+         if moved and self._to_put_bomb:
+            self._to_put_bomb = False
+
+            stages.current.map.place(TlBomb(self.x - self._axis.dir_x,
+                                            self.y - self._axis.dir_y,
+                                            self.z,
+                                            2))
 
    def on_key_event(self, key, state):
-      self._h_axis.react_to_key(key, state)
-      self._v_axis.react_to_key(key, state)
+      self._axis.react_to_key(key, state)
 
-      if key == self._bomb_key and state > 0:
-         self._placed_bomb = True
+      if key == self._bomb_key and state:
+         self._to_put_bomb = True

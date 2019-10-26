@@ -52,26 +52,19 @@ class Arena(Stage):
              (x == self.map.cols - 2 and y == self.map.rows - 4)
 
    def _place_players(self):
-      self.map.remove(1, 1, 1)
-      self.map.remove(2, 1, 1)
-      self.map.remove(1, 2, 1)
-      self.map.remove(self.map.cols - 2, self.map.rows - 2, 1)
-      self.map.remove(self.map.cols - 3, self.map.rows - 2, 1)
-      self.map.remove(self.map.cols - 2, self.map.rows - 3, 1)
+      for x, y in ((1, 1), (2, 1), (1, 2)):
+         self.map.remove(x                    , y                    , 1)
+         self.map.remove(self.map.cols - 1 - x, self.map.rows - 1 - y, 1)
 
-      self.map.place(
-         TlPlayer(1, 1, 1,
-            Image("gfx/player.png"),
-            Axis((K_d, 1), (K_a, -1)),
-            Axis((K_s, 1), (K_w, -1)),
-            K_b))
-
-      self.map.place(
-         TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
-            Image("gfx/player2.png"),
-            Axis((K_RIGHT, 1), (K_LEFT, -1)),
-            Axis((K_DOWN, 1), (K_UP, -1)),
-            K_KP3))
+      self.map.place(TlPlayer(1, 1, 1,
+                              Image("gfx/player.png"),
+                              Axis(K_w, K_a, K_s, K_d),
+                              K_v))
+      
+      self.map.place(TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
+                              Image("gfx/player2.png"),
+                              Axis(K_UP, K_LEFT, K_DOWN, K_RIGHT),
+                              K_KP3))
 
 class GrassArena(Arena):
    BREAKABLE_TILES = [

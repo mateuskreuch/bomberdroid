@@ -1,5 +1,4 @@
 # this file is the entry point of the game
-
 import pygame, lib, stages
 from pygame.locals import *
 
@@ -22,7 +21,7 @@ while running:
          stages.current.on_key_event(event.key, 1)
       
       elif event.type == KEYUP:
-         stages.current.on_key_event(event.key, -1)
+         stages.current.on_key_event(event.key, 0)
 
    stages.current.on_draw()
    stages.current.on_update(dt / 1000)
