@@ -25,6 +25,9 @@ class Tile:
    #
 
    def move_to(self, x, y):
+      if x == self.x and y == self.y:
+         return False
+
       dest = stages.current.map.get(x, y, self.z)
 
       if dest is None or dest.on_destroy_attempt(self):
@@ -114,6 +117,9 @@ class TlRuPass(Tile):
    #
 
    def on_destroy_attempt(self, tile):
+      if isinstance(tile, TlPlayer):
+         tile.increase_speed()
+
       return True
 
 class TlBroken(Tile):
@@ -147,12 +153,15 @@ class TlPlayer(Tile):
       self.y      = y
       self.z      = z
       
+      self.bomb_strength = 2
+
       self._axis          = axis
       self._bomb_key      = bomb_key
       self._sprite        = img
+
       self._last_moved_at = 0
       self._to_put_bomb   = False
-
+      self._slowness      = 0.2
    #
 
    def on_destroy_attempt(self, tile):
@@ -164,22 +173,25 @@ class TlPlayer(Tile):
    def on_update(self, dt):
       self._last_moved_at += dt
 
-      if self._last_moved_at >= 0.2 and (self._axis.dir_x or self._axis.dir_y):
+      if  self._last_moved_at >= self._slowness                              \
+      and self.move_to(self.x + self._axis.dir_x, self.y + self._axis.dir_y):
          self._last_moved_at = 0
 
-         moved = self.move_to(self.x + self._axis.dir_x, 
-                              self.y + self._axis.dir_y)
-
-         if moved and self._to_put_bomb:
+         if self._to_put_bomb:
             self._to_put_bomb = False
 
             stages.current.map.place(TlBomb(self.x - self._axis.dir_x,
                                             self.y - self._axis.dir_y,
                                             self.z,
-                                            2))
+                                            self.bomb_strength))
 
    def on_key_event(self, key, state):
       self._axis.react_to_key(key, state)
 
       if key == self._bomb_key and state:
          self._to_put_bomb = True
+
+   #
+
+   def increase_speed(self):
+      self._slowness = min(self._slowness * 0.9, 0.13)

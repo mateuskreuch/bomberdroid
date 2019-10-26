@@ -50,7 +50,7 @@ class Animation(Image):
       self._time_counter += dt
 
       if  self._time_counter >= self.SECONDS_PER_FRAME \
-      and self._at_frame < self._max_frame - 1:
+      and self._at_frame < self._max_frame - 1         :
          self._time_counter = 0
          self._at_frame += 1
 
