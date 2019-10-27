@@ -2,6 +2,9 @@
 
 import lib, stages, random
 from lib import Image, Animation, Axis
+from pygame.mixer import Sound
+
+#-----------------------------------------------------------------------------#
 
 class Tile:
    _sprite = Image("gfx/missing.png")
@@ -40,23 +43,31 @@ class Tile:
       
       return False
 
+#-----------------------------------------------------------------------------#
+
 class BreakableTile(Tile):
    def on_destroy_attempt(self, tile):
       if isinstance(tile, TlExplosion):
          stages.current.map.place(TlBroken(self.x, self.y, self.z))
 
       return False
-   
-   #
+
+#-----------------------------------------------------------------------------#
 
 class TlGrass(Tile):
    _sprite = Image("gfx/grass.png")
 
+#-----------------------------------------------------------------------------#
+
 class TlConcrete(Tile):
    _sprite = Image("gfx/concrete.png")
 
+#-----------------------------------------------------------------------------#
+
 class TlBrick(BreakableTile):
    _sprite = Image("gfx/brick.png")
+
+#-----------------------------------------------------------------------------#
 
 class TlBush(BreakableTile):
    _sprite = Image("gfx/bush.png")
@@ -66,11 +77,16 @@ class TlBush(BreakableTile):
    def on_destroy_attempt(self, tile):
       super().on_destroy_attempt(tile)
 
-      if isinstance(tile, TlPlayer):
+      try:
          tile.hide_in_bush()
          return True
       
+      except Exception:
+         pass
+
       return False
+
+#-----------------------------------------------------------------------------#
 
 class TlCrate(BreakableTile):
    _sprite = Image("gfx/crate.png")
@@ -81,10 +97,11 @@ class TlCrate(BreakableTile):
       if isinstance(tile, (TlPlayer, TlCrate)):
          dx = self.x - tile.x
          dy = self.y - tile.y
-
          return self.move_to(self.x + dx, self.y + dy)
       
       return False
+
+#-----------------------------------------------------------------------------#
 
 class TlExplosion(Tile):
    def __init__(self, x, y, z):
@@ -97,13 +114,19 @@ class TlExplosion(Tile):
    def on_update(self, dt):
       self._sprite.update(dt)
 
-      if self._sprite.get_completion() >= 1:
+      if self._sprite.completion >= 1:
          stages.current.map.remove(self)
 
    def on_destroy_attempt(self, tile):
       return True
+
+#-----------------------------------------------------------------------------#
    
 class TlBomb(Tile):
+   _SOUND = Sound("sfx/bomb.wav")
+
+   #
+
    def __init__(self, x, y, z, strength = 2):
       super().__init__(x, y, z)
 
@@ -118,7 +141,7 @@ class TlBomb(Tile):
    def on_update(self, dt):
       self._sprite.update(dt)
 
-      if self._sprite.get_completion() >= 1:
+      if self._sprite.completion >= 1:
          self.explode()
 
    def on_destroy_attempt(self, tile):
@@ -130,6 +153,8 @@ class TlBomb(Tile):
    #
 
    def explode(self):
+      self._SOUND.play()
+
       stages.current.map.place(TlExplosion(self.x, self.y, self.z))
 
       for ix, iy in ((0, -1), (-1, 0), (0, 1), (1, 0)):
@@ -137,6 +162,8 @@ class TlBomb(Tile):
             if not stages.current.map.place_attempt(
             TlExplosion(self.x + i*ix, self.y + i*iy, self.z)):
                break
+
+#-----------------------------------------------------------------------------#
 
 class TlRuPass(Tile):
    _sprite = Image("gfx/ru_pass.png")
@@ -146,9 +173,11 @@ class TlRuPass(Tile):
    def on_destroy_attempt(self, tile):
       return True
 
+#-----------------------------------------------------------------------------#
+
 class TlBroken(Tile):
-   DROP_CHANCE = 0.5
-   DROPS = [
+   _DROP_CHANCE = 0.5
+   _DROPS = [
       TlRuPass
    ]
 
@@ -164,16 +193,18 @@ class TlBroken(Tile):
    def on_update(self, dt):
       self._sprite.update(dt)
 
-      if self._sprite.get_completion() >= 1:
+      if self._sprite.completion >= 1:
          stages.current.map.remove(self)
 
-         if random.random() <= self.DROP_CHANCE:
-            drop = random.choice(self.DROPS)
+         if random.random() <= self._DROP_CHANCE:
+            drop = random.choice(self._DROPS)
             stages.current.map.place(drop(self.x, self.y, self.z))
 
+#-----------------------------------------------------------------------------#
+
 class TlPlayer(Tile):
-   PLAYER_BUSH_SPRITE = Image("gfx/player_bush.png")
-   SLOWNESS = 0.18
+   _BUSH_SPRITE = Image("gfx/player_bush.png")
+   _SLOWNESS = 0.18
 
    #
 
@@ -214,7 +245,7 @@ class TlPlayer(Tile):
 
       was_on_bush = self._in_bush
 
-      if  self._last_moved_at >= self.SLOWNESS                              \
+      if  self._last_moved_at >= self._SLOWNESS                             \
       and self.move_to(self.x + self._axis.dir_x, self.y + self._axis.dir_y):
          self._last_moved_at = 0
 
@@ -235,7 +266,7 @@ class TlPlayer(Tile):
 
    def on_draw(self):
       if self._in_bush:
-         self.PLAYER_BUSH_SPRITE.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE)
+         self._BUSH_SPRITE.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE)
 
       else:
          super().on_draw()

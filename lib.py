@@ -2,6 +2,8 @@
 
 import pygame, inspect
 
+#-----------------------------------------------------------------------------#
+
 class Image:
    _cache = {}
 
@@ -22,8 +24,10 @@ class Image:
    def draw(self, x, y):
       screen.blit(self._surface, (x, y))
 
+#-----------------------------------------------------------------------------#
+
 class Animation(Image):
-   SECONDS_PER_FRAME = 0.05
+   _SECONDS_PER_FRAME = 0.05
 
    #
 
@@ -46,18 +50,23 @@ class Animation(Image):
 
    #
 
+   @property
+   def completion(self):
+      return self._at_frame / (self._max_frame - 1)
+
+   #
+
    def update(self, dt):
       self._time_counter += dt
 
-      if  self._time_counter >= self.SECONDS_PER_FRAME:
+      if self._time_counter >= self._SECONDS_PER_FRAME:
          self._time_counter = 0
          self._at_frame += 1
 
    def draw(self, x, y):
       screen.blit(self._surfaces[self._at_frame % self._max_frame], (x, y))
 
-   def get_completion(self):
-      return self._at_frame / (self._max_frame - 1)
+#-----------------------------------------------------------------------------#
 
 class TileMap:
    def __init__(self, w, h, z):
@@ -122,6 +131,8 @@ class TileMap:
                         for y in range(self.rows) 
                         for x in range(self.cols))
 
+#-----------------------------------------------------------------------------#
+
 class Axis:
    def __init__(self, up, left, down, right):
       self.dir_x = self.dir_y = 0
@@ -152,6 +163,8 @@ class Axis:
          elif self._l_pressed: self.dir_x, self.dir_y = -1,  0
          elif self._d_pressed: self.dir_x, self.dir_y =  0,  1
          elif self._r_pressed: self.dir_x, self.dir_y =  1,  0
+
+#-----------------------------------------------------------------------------#
 
 DIR = inspect.getfile(inspect.currentframe()) \
       .replace("\\", "/")                     \

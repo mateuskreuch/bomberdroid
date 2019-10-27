@@ -6,16 +6,22 @@ from pygame.locals import *
 from lib           import TileMap
 from tiles         import *
 
+#-----------------------------------------------------------------------------#
+
 class Stage:
    def on_draw(self):                  pass
    def on_key_event(self, key, state): pass
    def on_update(self, dt):            pass
 
+#-----------------------------------------------------------------------------#
+
 class MainMenu(Stage):
    pass
 
+#-----------------------------------------------------------------------------#
+
 class Arena(Stage):
-   GEN_NOISE = 0.6
+   _GEN_NOISE = 0.6
 
    #
 
@@ -56,18 +62,22 @@ class Arena(Stage):
          self.map.remove(x                    , y                    , 1)
          self.map.remove(self.map.cols - 1 - x, self.map.rows - 1 - y, 1)
 
-      self.map.place(TlPlayer(1, 1, 1,
-                              Animation("gfx/player_a_%d.png" % k for k in range(2)),
-                              Axis(K_w, K_a, K_s, K_d),
-                              K_v))
+      self.map.place(
+         TlPlayer(1, 1, 1,
+                  Animation("gfx/player_a_%d.png" % k for k in range(2)),
+                  Axis(K_w, K_a, K_s, K_d),
+                  K_v))
 
-      self.map.place(TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
-                              Animation("gfx/player_b_%d.png" % k for k in range(2)),
-                              Axis(K_UP, K_LEFT, K_DOWN, K_RIGHT),
-                              K_KP3))
+      self.map.place(
+         TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
+                  Animation("gfx/player_b_%d.png" % k for k in range(2)),
+                  Axis(K_UP, K_LEFT, K_DOWN, K_RIGHT),
+                  K_KP3))
+
+#-----------------------------------------------------------------------------#
 
 class GrassArena(Arena):
-   BREAKABLE_TILES = [
+   _BREAKABLE_TILES = [
       TlBrick,
       TlBush,
       TlCrate
@@ -83,7 +93,7 @@ class GrassArena(Arena):
          elif self._is_border_tile(x, y):
             self.map.place(TlConcrete(x, y, z))
       
-         elif random.random() <= self.GEN_NOISE or self._is_lock_tile(x, y):
-            self.map.place(random.choice(self.BREAKABLE_TILES)(x, y, z))
+         elif random.random() <= self._GEN_NOISE or self._is_lock_tile(x, y):
+            self.map.place(random.choice(self._BREAKABLE_TILES)(x, y, z))
 
 current = None
