@@ -21,7 +21,7 @@ class Image:
    
    #
 
-   def draw(self, x, y):
+   def draw(self, x, y, dt = None):
       screen.blit(self._surface, (x, y))
 
 #-----------------------------------------------------------------------------#
@@ -50,21 +50,23 @@ class Animation(Image):
 
    #
 
-   @property
-   def completion(self):
-      return self._at_frame / (self._max_frame - 1)
+   def on_end(self): pass
 
    #
 
-   def update(self, dt):
+   def draw(self, x, y, dt):
       self._time_counter += dt
 
       if self._time_counter >= self._SECONDS_PER_FRAME:
          self._time_counter = 0
          self._at_frame += 1
 
-   def draw(self, x, y):
+         if self._at_frame >= self._max_frame - 1:
+            self.on_end()
+
       screen.blit(self._surfaces[self._at_frame % self._max_frame], (x, y))
+
+         
 
 #-----------------------------------------------------------------------------#
 
@@ -135,7 +137,7 @@ class TileMap:
 
 class Axis:
    def __init__(self, up, left, down, right):
-      self.dir_x = self.dir_y = 0
+      self.x = self.y = 0
 
       self._u = up
       self._l = left
@@ -156,13 +158,13 @@ class Axis:
                      self._d_pressed + self._r_pressed
 
       if keys_pressed == 0:
-         self.dir_x, self.dir_y = 0, 0
+         self.x = self.y = 0
 
       elif keys_pressed == 1:
-         if   self._u_pressed: self.dir_x, self.dir_y =  0, -1
-         elif self._l_pressed: self.dir_x, self.dir_y = -1,  0
-         elif self._d_pressed: self.dir_x, self.dir_y =  0,  1
-         elif self._r_pressed: self.dir_x, self.dir_y =  1,  0
+         if   self._u_pressed: self.x, self.y =  0, -1
+         elif self._l_pressed: self.x, self.y = -1,  0
+         elif self._d_pressed: self.x, self.y =  0,  1
+         elif self._r_pressed: self.x, self.y =  1,  0
 
 #-----------------------------------------------------------------------------#
 

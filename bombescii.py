@@ -41,7 +41,7 @@ while running:
       elif event.type == KEYUP:
          stages.current.on_key_event(event.key, 0)
 
-   stages.current.on_draw()
+   stages.current.on_draw(dt / 1000)
    stages.current.on_update(dt / 1000)
 
    scaled = pygame.transform.scale(lib.screen, lib.window.get_size())

@@ -9,7 +9,7 @@ from tiles         import *
 #-----------------------------------------------------------------------------#
 
 class Stage:
-   def on_draw(self):                  pass
+   def on_draw(self, dt):              pass
    def on_key_event(self, key, state): pass
    def on_update(self, dt):            pass
 
@@ -35,8 +35,8 @@ class Arena(Stage):
 
    def on_generation(self): pass
    
-   def on_draw(self):
-      for tile in self.map: tile.on_draw()
+   def on_draw(self, dt):
+      for tile in self.map: tile.on_draw(dt)
 
    def on_key_event(self, key, state):
       for tile in self.map: tile.on_key_event(key, state)
@@ -95,5 +95,7 @@ class GrassArena(Arena):
       
          elif random.random() <= self._GEN_NOISE or self._is_lock_tile(x, y):
             self.map.place(random.choice(self._BREAKABLE_TILES)(x, y, z))
+
+#-----------------------------------------------------------------------------#
 
 current = None

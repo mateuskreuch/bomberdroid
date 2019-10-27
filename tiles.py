@@ -22,21 +22,21 @@ class Tile:
    def on_update(self, dt)           : pass
    def on_key_event(self, key, state): pass
    def on_destroy_attempt(self, tile): return False
-   def on_draw(self):
-      self._sprite.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE)
+   def on_draw(self, dt):
+      self._sprite.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE, dt)
 
    #
 
-   def move_to(self, x, y):
-      if x == self.x and y == self.y:
+   def move(self, dx, dy):
+      if dx == 0 and dy == 0:
          return False
 
-      dest = stages.current.map.get(x, y, self.z)
+      dest = stages.current.map.get(self.x + dx, self.y + dy, self.z)
 
       if dest is None or dest.on_destroy_attempt(self):
          stages.current.map.remove(self)
-         self.x = x
-         self.y = y
+         self.x += dx
+         self.y += dy
          stages.current.map.place(self)
 
          return True
@@ -95,9 +95,7 @@ class TlCrate(BreakableTile):
       super().on_destroy_attempt(tile)
 
       if isinstance(tile, (TlPlayer, TlCrate)):
-         dx = self.x - tile.x
-         dy = self.y - tile.y
-         return self.move_to(self.x + dx, self.y + dy)
+         return self.move(self.x - tile.x, self.y - tile.y)
       
       return False
 
@@ -108,14 +106,9 @@ class TlExplosion(Tile):
       super().__init__(x, y, z)
 
       self._sprite = Animation("gfx/explosion_%d.png" % k for k in range(12))
+      self._sprite.on_end = lambda: stages.current.map.remove(self)
 
    #
-
-   def on_update(self, dt):
-      self._sprite.update(dt)
-
-      if self._sprite.completion >= 1:
-         stages.current.map.remove(self)
 
    def on_destroy_attempt(self, tile):
       return True
@@ -130,19 +123,15 @@ class TlBomb(Tile):
    def __init__(self, x, y, z, strength = 2):
       super().__init__(x, y, z)
 
+      self._strength = strength
+
       a = ["gfx/bomb_%d.png" % k for k in range(7)]
       z = list(reversed(a))
 
-      self._sprite   = Animation(a + z + a + z + a)
-      self._strength = strength
+      self._sprite = Animation(a + z + a + z + a)
+      self._sprite.on_end = lambda: self.explode()
 
    #
-
-   def on_update(self, dt):
-      self._sprite.update(dt)
-
-      if self._sprite.completion >= 1:
-         self.explode()
 
    def on_destroy_attempt(self, tile):
       if isinstance(tile, TlExplosion):
@@ -187,18 +176,16 @@ class TlBroken(Tile):
       super().__init__(x, y, z)
 
       self._sprite = Animation("gfx/broken_%d.png" % k for k in range(4))
+      self._sprite.on_end = lambda: self._vanish()
 
    #
-   
-   def on_update(self, dt):
-      self._sprite.update(dt)
 
-      if self._sprite.completion >= 1:
-         stages.current.map.remove(self)
+   def _vanish(self):
+      stages.current.map.remove(self)
 
-         if random.random() <= self._DROP_CHANCE:
-            drop = random.choice(self._DROPS)
-            stages.current.map.place(drop(self.x, self.y, self.z))
+      if random.random() <= self._DROP_CHANCE:
+         drop = random.choice(self._DROPS)
+         stages.current.map.place(drop(self.x, self.y, self.z))
 
 #-----------------------------------------------------------------------------#
 
@@ -229,47 +216,38 @@ class TlPlayer(Tile):
       if isinstance(tile, TlExplosion):
          return True
 
-      elif isinstance(tile, TlCrate):
-         dx = self.x - tile.x
-         dy = self.y - tile.y
-
-         self.move_to(self.x + dx, self.y + dy)
-         return True
-      
       return False
    
    def on_update(self, dt):
-      self._sprite.update(dt)
-
       self._last_moved_at += dt
 
       was_on_bush = self._in_bush
 
-      if  self._last_moved_at >= self._SLOWNESS                             \
-      and self.move_to(self.x + self._axis.dir_x, self.y + self._axis.dir_y):
+      if  self._last_moved_at >= self._SLOWNESS \
+      and self.move(self._axis.x, self._axis.y) :
          self._last_moved_at = 0
 
          if was_on_bush:
             self._in_bush -= 1
 
-            stages.current.map.place(TlBush(self.x - self._axis.dir_x, 
-                                            self.y - self._axis.dir_y, 
+            stages.current.map.place(TlBush(self.x - self._axis.x, 
+                                            self.y - self._axis.y, 
                                             self.z))
          
          if self._to_put_bomb:
             self._to_put_bomb = False
 
-            stages.current.map.place(TlBomb(self.x - self._axis.dir_x,
-                                            self.y - self._axis.dir_y,
+            stages.current.map.place(TlBomb(self.x - self._axis.x,
+                                            self.y - self._axis.y,
                                             self.z,
                                             self.bomb_strength))
 
-   def on_draw(self):
+   def on_draw(self, dt):
       if self._in_bush:
          self._BUSH_SPRITE.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE)
 
       else:
-         super().on_draw()
+         super().on_draw(dt)
 
    def on_key_event(self, key, state):
       self._axis.react_to_key(key, state)
