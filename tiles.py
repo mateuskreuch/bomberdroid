@@ -46,6 +46,8 @@ class BreakableTile(Tile):
          stages.current.map.place(TlBroken(self.x, self.y, self.z))
 
       return False
+   
+   #
 
 class TlGrass(Tile):
    _sprite = Image("gfx/grass.png")
@@ -58,6 +60,31 @@ class TlBrick(BreakableTile):
 
 class TlBush(BreakableTile):
    _sprite = Image("gfx/bush.png")
+
+   #
+
+   def on_destroy_attempt(self, tile):
+      super().on_destroy_attempt(tile)
+
+      if isinstance(tile, TlPlayer):
+         tile.hide_in_bush()
+         return True
+      
+      return False
+
+class TlCrate(BreakableTile):
+   _sprite = Image("gfx/crate.png")
+
+   def on_destroy_attempt(self, tile):
+      super().on_destroy_attempt(tile)
+
+      if isinstance(tile, (TlPlayer, TlCrate)):
+         dx = self.x - tile.x
+         dy = self.y - tile.y
+
+         return self.move_to(self.x + dx, self.y + dy)
+      
+      return False
 
 class TlExplosion(Tile):
    def __init__(self, x, y, z):
@@ -117,9 +144,6 @@ class TlRuPass(Tile):
    #
 
    def on_destroy_attempt(self, tile):
-      if isinstance(tile, TlPlayer):
-         tile.increase_speed()
-
       return True
 
 class TlBroken(Tile):
@@ -148,6 +172,11 @@ class TlBroken(Tile):
             stages.current.map.place(drop(self.x, self.y, self.z))
 
 class TlPlayer(Tile):
+   PLAYER_BUSH_SPRITE = Image("gfx/player_bush.png")
+   SLOWNESS = 0.18
+
+   #
+
    def __init__(self, x, y, z, img, axis, bomb_key):
       self.x = x
       self.y = y
@@ -161,12 +190,19 @@ class TlPlayer(Tile):
 
       self._last_moved_at = 0
       self._to_put_bomb   = False
-      self._slowness      = 0.2
+      self._in_bush       = 0
 
    #
 
    def on_destroy_attempt(self, tile):
       if isinstance(tile, TlExplosion):
+         return True
+
+      elif isinstance(tile, TlCrate):
+         dx = self.x - tile.x
+         dy = self.y - tile.y
+
+         self.move_to(self.x + dx, self.y + dy)
          return True
       
       return False
@@ -176,10 +212,19 @@ class TlPlayer(Tile):
 
       self._last_moved_at += dt
 
-      if  self._last_moved_at >= self._slowness                             \
+      was_on_bush = self._in_bush
+
+      if  self._last_moved_at >= self.SLOWNESS                              \
       and self.move_to(self.x + self._axis.dir_x, self.y + self._axis.dir_y):
          self._last_moved_at = 0
 
+         if was_on_bush:
+            self._in_bush -= 1
+
+            stages.current.map.place(TlBush(self.x - self._axis.dir_x, 
+                                            self.y - self._axis.dir_y, 
+                                            self.z))
+         
          if self._to_put_bomb:
             self._to_put_bomb = False
 
@@ -188,13 +233,20 @@ class TlPlayer(Tile):
                                             self.z,
                                             self.bomb_strength))
 
+   def on_draw(self):
+      if self._in_bush:
+         self.PLAYER_BUSH_SPRITE.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE)
+
+      else:
+         super().on_draw()
+
    def on_key_event(self, key, state):
       self._axis.react_to_key(key, state)
 
-      if key == self._bomb_key and state:
+      if key == self._bomb_key and state and not self._in_bush:
          self._to_put_bomb = True
 
    #
 
-   def increase_speed(self):
-      self._slowness = min(self._slowness * 0.95, 0.17)
+   def hide_in_bush(self):
+      self._in_bush += 1

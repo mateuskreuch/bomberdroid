@@ -1,4 +1,5 @@
 # this file is the entry point of the game
+
 import pygame, lib, stages
 from pygame.locals import *
 
