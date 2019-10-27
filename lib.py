@@ -42,20 +42,19 @@ class Animation(Image):
 
             self._cache[path] = self._surfaces[-1]
 
-      self._max_frame    = len(self._surfaces)
+      self._max_frame = len(self._surfaces)
 
    #
 
    def update(self, dt):
       self._time_counter += dt
 
-      if  self._time_counter >= self.SECONDS_PER_FRAME \
-      and self._at_frame < self._max_frame - 1         :
+      if  self._time_counter >= self.SECONDS_PER_FRAME:
          self._time_counter = 0
          self._at_frame += 1
 
    def draw(self, x, y):
-      screen.blit(self._surfaces[self._at_frame], (x, y))
+      screen.blit(self._surfaces[self._at_frame % self._max_frame], (x, y))
 
    def get_completion(self):
       return self._at_frame / (self._max_frame - 1)

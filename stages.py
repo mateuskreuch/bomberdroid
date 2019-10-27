@@ -57,12 +57,12 @@ class Arena(Stage):
          self.map.remove(self.map.cols - 1 - x, self.map.rows - 1 - y, 1)
 
       self.map.place(TlPlayer(1, 1, 1,
-                              Image("gfx/player.png"),
+                              Animation("gfx/player_a_%d.png" % k for k in range(2)),
                               Axis(K_w, K_a, K_s, K_d),
                               K_v))
       
       self.map.place(TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
-                              Image("gfx/player2.png"),
+                              Animation("gfx/player_b_%d.png" % k for k in range(2)),
                               Axis(K_UP, K_LEFT, K_DOWN, K_RIGHT),
                               K_KP3))
 

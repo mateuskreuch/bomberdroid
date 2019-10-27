@@ -80,7 +80,7 @@ class TlBomb(Tile):
    def __init__(self, x, y, z, strength = 2):
       super().__init__(x, y, z)
 
-      a = ["gfx/bomb_%d.png" % k for k in range(8)]
+      a = ["gfx/bomb_%d.png" % k for k in range(7)]
       z = list(reversed(a))
 
       self._sprite   = Animation(a + z + a + z + a)
@@ -149,9 +149,9 @@ class TlBroken(Tile):
 
 class TlPlayer(Tile):
    def __init__(self, x, y, z, img, axis, bomb_key):
-      self.x      = x
-      self.y      = y
-      self.z      = z
+      self.x = x
+      self.y = y
+      self.z = z
       
       self.bomb_strength = 2
 
@@ -162,6 +162,7 @@ class TlPlayer(Tile):
       self._last_moved_at = 0
       self._to_put_bomb   = False
       self._slowness      = 0.2
+
    #
 
    def on_destroy_attempt(self, tile):
@@ -171,9 +172,11 @@ class TlPlayer(Tile):
       return False
    
    def on_update(self, dt):
+      self._sprite.update(dt)
+
       self._last_moved_at += dt
 
-      if  self._last_moved_at >= self._slowness                              \
+      if  self._last_moved_at >= self._slowness                             \
       and self.move_to(self.x + self._axis.dir_x, self.y + self._axis.dir_y):
          self._last_moved_at = 0
 
@@ -194,4 +197,4 @@ class TlPlayer(Tile):
    #
 
    def increase_speed(self):
-      self._slowness = min(self._slowness * 0.9, 0.13)
+      self._slowness = min(self._slowness * 0.95, 0.17)
