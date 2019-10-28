@@ -77,12 +77,9 @@ class TlBush(BreakableTile):
    def on_destroy_attempt(self, tile):
       super().on_destroy_attempt(tile)
 
-      try:
+      if isinstance(tile, TlPlayer):
          tile.hide_in_bush()
          return True
-      
-      except Exception:
-         pass
 
       return False
 
@@ -137,6 +134,9 @@ class TlBomb(Tile):
       if isinstance(tile, TlExplosion):
          self.explode()
       
+      elif isinstance(tile, TlCrate):
+         return self.move(self.x - tile.x, self.y - tile.y)
+      
       return False
 
    #
@@ -160,6 +160,9 @@ class TlRuPass(Tile):
    #
 
    def on_destroy_attempt(self, tile):
+      if isinstance(tile, TlPlayer):
+         tile.bomb_strength += 1
+      
       return True
 
 #-----------------------------------------------------------------------------#
@@ -214,8 +217,8 @@ class TlPlayer(Tile):
 
    def on_destroy_attempt(self, tile):
       if isinstance(tile, TlExplosion):
-         return True
-
+         self._sprite = Animation("gfx/dying_%d.png" % k for k in range(5))
+         
       return False
    
    def on_update(self, dt):
