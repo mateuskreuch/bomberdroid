@@ -31,12 +31,15 @@ class Tile:
       if dx == 0 and dy == 0:
          return False
 
-      dest = stages.current.map.get(self.x + dx, self.y + dy, self.z)
+      dx = (self.x + dx) % stages.current.map.cols
+      dy = (self.y + dy) % stages.current.map.rows
+
+      dest = stages.current.map.get(dx, dy, self.z)
 
       if dest is None or dest.on_destroy_attempt(self):
          stages.current.map.remove(self)
-         self.x += dx
-         self.y += dy
+         self.x = dx
+         self.y = dy
          stages.current.map.place(self)
 
          return True

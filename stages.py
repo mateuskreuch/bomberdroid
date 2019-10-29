@@ -90,7 +90,7 @@ class GrassArena(Arena):
          if z == 0:
             self.map.place(TlGrass(x, y, z))
          
-         elif self._is_border_tile(x, y):
+         elif self._is_border_tile(x, y) and not y == self.map.rows//2:
             self.map.place(TlConcrete(x, y, z))
       
          elif random.random() <= self._GEN_NOISE or self._is_lock_tile(x, y):
