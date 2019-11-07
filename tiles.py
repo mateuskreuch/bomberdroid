@@ -1,4 +1,4 @@
-# this file contains all tiles
+# This file contains all the tiles.
 
 import lib, stages, random
 from lib import Image, Animation, Axis
@@ -19,9 +19,15 @@ class Tile:
 
    #
 
-   def on_update(self, dt)           : pass
-   def on_key_event(self, key, state): pass
-   def on_destroy_attempt(self, tile): return False
+   def on_update(self, dt): 
+      pass
+
+   def on_key_event(self, key, state): 
+      pass
+
+   def on_overlapped(self, tile):
+      return False
+
    def on_draw(self, dt):
       self._sprite.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE, dt)
 
@@ -31,12 +37,12 @@ class Tile:
       if dx == 0 and dy == 0:
          return False
 
-      dx = (self.x + dx) % stages.current.map.cols
-      dy = (self.y + dy) % stages.current.map.rows
+      dx += self.x
+      dy += self.y
 
       dest = stages.current.map.get(dx, dy, self.z)
 
-      if dest is None or dest.on_destroy_attempt(self):
+      if dest is None or dest.on_overlapped(self):
          stages.current.map.remove(self)
          self.x = dx
          self.y = dy
@@ -49,11 +55,20 @@ class Tile:
 #-----------------------------------------------------------------------------#
 
 class BreakableTile(Tile):
-   def on_destroy_attempt(self, tile):
+   def on_overlapped(self, tile):
       if isinstance(tile, TlExplosion):
-         stages.current.map.place(TlBroken(self.x, self.y, self.z))
+         stages.current.map.place(TlExplosion(self.x, self.y, self.z)
+                                     .with_leftover(self._pick_drop()))
 
       return False
+
+   #
+
+   def _pick_drop(self):
+      chance = random.random()
+
+      if chance <= 0.5: return TlRuPass(-1, -1, -1)
+      else:             return None
 
 #-----------------------------------------------------------------------------#
 
@@ -77,8 +92,8 @@ class TlBush(BreakableTile):
 
    #
 
-   def on_destroy_attempt(self, tile):
-      super().on_destroy_attempt(tile)
+   def on_overlapped(self, tile):
+      super().on_overlapped(tile)
 
       if isinstance(tile, TlPlayer):
          tile.hide_in_bush()
@@ -91,8 +106,10 @@ class TlBush(BreakableTile):
 class TlCrate(BreakableTile):
    _sprite = Image("gfx/crate.png")
 
-   def on_destroy_attempt(self, tile):
-      super().on_destroy_attempt(tile)
+   #
+
+   def on_overlapped(self, tile):
+      super().on_overlapped(tile)
 
       if isinstance(tile, (TlPlayer, TlCrate)):
          return self.move(self.x - tile.x, self.y - tile.y)
@@ -101,39 +118,72 @@ class TlCrate(BreakableTile):
 
 #-----------------------------------------------------------------------------#
 
+class TlRuPass(Tile):
+   _sprite = Image("gfx/ru_pass.png")
+
+   #
+
+   def on_overlapped(self, tile):
+      if isinstance(tile, TlPlayer):
+         tile.bomb_strength += 1
+      
+      return True
+
+#-----------------------------------------------------------------------------#
+
 class TlExplosion(Tile):
    def __init__(self, x, y, z):
       super().__init__(x, y, z)
 
-      self._sprite = Animation("gfx/explosion_%d.png" % k for k in range(12))
-      self._sprite.on_end = lambda: stages.current.map.remove(self)
+      self.leftover = None
+      
+      self._sprite = Animation("gfx/explosion_%d.png" % k for k in range(8))
+      self._sprite.on_end = self._free
+
+   def with_leftover(self, leftover):
+      self.leftover = leftover
+      return self
 
    #
 
-   def on_destroy_attempt(self, tile):
-      return True
+   def _free(self):
+      stages.current.map.remove(self)
+
+      if self.leftover is not None:
+         self.leftover.x = self.x
+         self.leftover.y = self.y
+         self.leftover.z = self.z
+
+         stages.current.map.place(self.leftover)
 
 #-----------------------------------------------------------------------------#
-   
+
 class TlBomb(Tile):
    _SOUND = Sound("sfx/bomb.wav")
 
    #
 
-   def __init__(self, x, y, z, strength = 2):
+   def __init__(self, x, y, z):
       super().__init__(x, y, z)
 
+      self._strength = 2
+      
+      self._sprite = \
+         Animation("gfx/bomb_%d.png" % k for k in list(range(7))           + 
+                                                  list(reversed(range(7))) +
+                                                  list(range(7))           + 
+                                                  list(reversed(range(7))) +
+                                                  list(range(7))           )
+
+      self._sprite.on_end = self.explode
+
+   def with_strength(self, strength):
       self._strength = strength
-
-      a = ["gfx/bomb_%d.png" % k for k in range(7)]
-      z = list(reversed(a))
-
-      self._sprite = Animation(a + z + a + z + a)
-      self._sprite.on_end = lambda: self.explode()
+      return self
 
    #
 
-   def on_destroy_attempt(self, tile):
+   def on_overlapped(self, tile):
       if isinstance(tile, TlExplosion):
          self.explode()
       
@@ -157,41 +207,22 @@ class TlBomb(Tile):
 
 #-----------------------------------------------------------------------------#
 
-class TlRuPass(Tile):
-   _sprite = Image("gfx/ru_pass.png")
-
-   #
-
-   def on_destroy_attempt(self, tile):
-      if isinstance(tile, TlPlayer):
-         tile.bomb_strength += 1
-      
-      return True
-
-#-----------------------------------------------------------------------------#
-
-class TlBroken(Tile):
-   _DROP_CHANCE = 0.5
-   _DROPS = [
-      TlRuPass
-   ]
+class TlBombBush(Tile):
+   _sprite = Image("gfx/bomb_bush.png")
 
    #
 
    def __init__(self, x, y, z):
       super().__init__(x, y, z)
 
-      self._sprite = Animation("gfx/broken_%d.png" % k for k in range(4))
-      self._sprite.on_end = lambda: self._vanish()
-
    #
 
-   def _vanish(self):
-      stages.current.map.remove(self)
+   def on_overlapped(self, tile):
+      if isinstance(tile, TlPlayer):
+         tile.kill()
+         return True
 
-      if random.random() <= self._DROP_CHANCE:
-         drop = random.choice(self._DROPS)
-         stages.current.map.place(drop(self.x, self.y, self.z))
+      return False
 
 #-----------------------------------------------------------------------------#
 
@@ -202,9 +233,7 @@ class TlPlayer(Tile):
    #
 
    def __init__(self, x, y, z, img, axis, bomb_key):
-      self.x = x
-      self.y = y
-      self.z = z
+      super().__init__(x, y, z)
       
       self.bomb_strength = 2
 
@@ -218,10 +247,12 @@ class TlPlayer(Tile):
 
    #
 
-   def on_destroy_attempt(self, tile):
+   def on_overlapped(self, tile):
       if isinstance(tile, TlExplosion):
-         self._sprite = Animation("gfx/dying_%d.png" % k for k in range(5))
-         
+         self.kill()
+         tile.leftover = self
+         return True
+
       return False
    
    def on_update(self, dt):
@@ -245,8 +276,8 @@ class TlPlayer(Tile):
 
             stages.current.map.place(TlBomb(self.x - self._axis.x,
                                             self.y - self._axis.y,
-                                            self.z,
-                                            self.bomb_strength))
+                                            self.z)
+                                        .with_strength(self.bomb_strength))
 
    def on_draw(self, dt):
       if self._in_bush:
@@ -262,6 +293,9 @@ class TlPlayer(Tile):
          self._to_put_bomb = True
 
    #
+
+   def kill(self):
+      self._sprite = Animation("gfx/dying_%d.png" % k for k in range(5))
 
    def hide_in_bush(self):
       self._in_bush += 1

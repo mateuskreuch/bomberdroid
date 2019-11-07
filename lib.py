@@ -1,4 +1,4 @@
-# this file contains general classes, data structures and constants
+# This file contains general classes, data structures and constants
 
 import pygame, inspect
 
@@ -10,19 +10,20 @@ class Image:
    #
 
    def __init__(self, path):
-      try:
-         self._surface = self._cache[path]
-         
-      except KeyError:
-         self._surface = pygame.image.load(DIR + path) \
-                         .convert_alpha()
-
-         self._cache[path] = self._surface
+      self._surface = self._load_or_create_sprite(path)
    
    #
 
    def draw(self, x, y, dt = None):
       screen.blit(self._surface, (x, y))
+
+   #
+
+   def _load_or_create_sprite(self, path):
+      if path not in self._cache:
+         self._cache[path] = pygame.image.load(DIR + path).convert_alpha()
+
+      return self._cache[path]
 
 #-----------------------------------------------------------------------------#
 
@@ -37,20 +38,14 @@ class Animation(Image):
       self._surfaces     = []
 
       for path in paths:
-         try:
-            self._surfaces.append(self._cache[path])
-            
-         except KeyError:
-            self._surfaces.append(pygame.image.load(DIR + path)
-                                  .convert_alpha())
+         self._surfaces.append(self._load_or_create_sprite(path))
 
-            self._cache[path] = self._surfaces[-1]
-
-      self._max_frame = len(self._surfaces)
+      self._frame_amount = len(self._surfaces)
 
    #
 
-   def on_end(self): pass
+   def on_end(self): 
+      pass
 
    #
 
@@ -61,12 +56,10 @@ class Animation(Image):
          self._time_counter = 0
          self._at_frame += 1
 
-         if self._at_frame >= self._max_frame - 1:
+         if self._at_frame >= self._frame_amount - 1:
             self.on_end()
 
-      screen.blit(self._surfaces[self._at_frame % self._max_frame], (x, y))
-
-         
+      screen.blit(self._surfaces[self._at_frame % self._frame_amount], (x, y))
 
 #-----------------------------------------------------------------------------#
 
@@ -77,6 +70,8 @@ class TileMap:
       self.lyrs = z
 
       self._elms = [None] * (w*h*z)
+
+   #
 
    def __iter__(self):
       return (k for k in self._elms if k != None)
@@ -111,7 +106,7 @@ class TileMap:
    def place_attempt(self, tile):
       dest = self.get(tile.x, tile.y, tile.z)
 
-      if dest is None or dest.on_destroy_attempt(tile):
+      if dest is None or dest.on_overlapped(tile):
          self.place(tile)
          return True
       

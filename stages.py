@@ -1,5 +1,5 @@
-# this file contains the stages of the game
-# stages are also commonly known as states or screens
+# This file contains the stages of the game.
+# Stages are also commonly known as states or screens.
 
 import random
 from pygame.locals import *
@@ -9,9 +9,14 @@ from tiles         import *
 #-----------------------------------------------------------------------------#
 
 class Stage:
-   def on_draw(self, dt):              pass
-   def on_key_event(self, key, state): pass
-   def on_update(self, dt):            pass
+   def on_draw(self, dt):
+      pass
+
+   def on_key_event(self, key, state):
+      pass
+
+   def on_update(self, dt):
+      pass
 
 #-----------------------------------------------------------------------------#
 
@@ -33,7 +38,8 @@ class Arena(Stage):
 
    #
 
-   def on_generation(self): pass
+   def on_generation(self):
+      pass
    
    def on_draw(self, dt):
       for tile in self.map: tile.on_draw(dt)
@@ -90,7 +96,7 @@ class GrassArena(Arena):
          if z == 0:
             self.map.place(TlGrass(x, y, z))
          
-         elif self._is_border_tile(x, y) and not y == self.map.rows//2:
+         elif self._is_border_tile(x, y):
             self.map.place(TlConcrete(x, y, z))
       
          elif random.random() <= self._GEN_NOISE or self._is_lock_tile(x, y):
