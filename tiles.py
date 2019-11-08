@@ -96,7 +96,7 @@ class TlBush(BreakableTile):
       super().on_overlapped(tile)
 
       if isinstance(tile, TlPlayer):
-         tile.entering_bush.setup(True)
+         tile.entering_bush.arm()
          return True
 
       return False
@@ -208,7 +208,6 @@ class TlBomb(Tile):
 #-----------------------------------------------------------------------------#
 
 class TlPlayer(Tile):
-   _BUSH_SPRITE = Image("gfx/player_bush.png")
    _SLOWNESS    = 0.18
 
    #
@@ -220,14 +219,18 @@ class TlPlayer(Tile):
       self.bomb_cooldown = 1.75
       self.entering_bush = Trigger(False)
 
-      self._axis     = axis
-      self._bomb_key = bomb_key
-      self._sprite   = img
+      self._axis        = axis
+      self._bomb_key    = bomb_key
+      self._sprite      = img
+      self._bush_sprite = Image("gfx/player_bush.png")
 
-      self._time_not_moving  = 0
-      self._time_not_bombing = 0
+      self._time_not_moving  = self._SLOWNESS
+      self._time_not_bombing = self.bomb_cooldown
       self._to_put_bomb      = Trigger(False)
       self._in_bush          = Trigger(False)
+
+      self._in_bush.on_trigger = self._switch_sprites
+      self._in_bush.on_arm     = self._switch_sprites
 
    #
 
@@ -262,23 +265,21 @@ class TlPlayer(Tile):
                                             self.z))
 
          if self.entering_bush.trigger():
-            self._in_bush.setup(True)
-
-   def on_draw(self, dt):
-      if self._in_bush:
-         self._BUSH_SPRITE.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE)
-
-      else:
-         super().on_draw(dt)
+            self._in_bush.arm()
 
    def on_key_event(self, key, state):
       self._axis.react_to_key(key, state)
 
       if key == self._bomb_key and state:
-         self._to_put_bomb.setup(True)
+         self._to_put_bomb.arm()
 
    #
 
    def kill(self):
       self._sprite = Animation("gfx/dying_%d.png" % k for k in range(5))
       self._sprite.on_end = stages.current.game_over
+
+   #
+
+   def _switch_sprites(self):
+      self._sprite, self._bush_sprite = self._bush_sprite, self._sprite

@@ -9,9 +9,6 @@
 # - Fields are not encapsulated with getters and setters because if it comes
 #   a time where it requires it, it can be done with Python's @property and
 #   @xxx.setter
-#
-# - The lack of comments is due to personal experience that comments are often
-#   distracting and if the code is clean it's self-explanatory
 
 import pygame
 
