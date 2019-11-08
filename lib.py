@@ -130,6 +130,32 @@ class TileMap:
 
 #-----------------------------------------------------------------------------#
 
+class Trigger:
+   def __init__(self, default):
+      self._state = default
+
+   #
+
+   def __eq__(self, other):
+      return self._state == other
+   
+   def __bool__(self):
+      return self._state
+   
+   #
+
+   def trigger(self):
+      if self._state:
+         self._state = False
+         return True
+
+      return False
+
+   def setup(self, value):
+      self._state = value
+
+#-----------------------------------------------------------------------------#
+
 class Axis:
    def __init__(self, up, left, down, right):
       self.x = self.y = 0

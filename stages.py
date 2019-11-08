@@ -52,6 +52,11 @@ class Arena(Stage):
 
    #
 
+   def game_over(self):
+      self.__init__()
+
+   #
+
    def _is_border_tile(self, x, y):
       return x == 0                 or y == 0                 or \
              x == self.map.cols - 1 or y == self.map.rows - 1 or \

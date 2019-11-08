@@ -1,7 +1,7 @@
 # This file contains all the tiles.
 
 import lib, stages, random
-from lib import Image, Animation, Axis
+from lib import Image, Animation, Axis, Trigger
 from pygame.mixer import Sound
 
 #-----------------------------------------------------------------------------#
@@ -57,8 +57,8 @@ class Tile:
 class BreakableTile(Tile):
    def on_overlapped(self, tile):
       if isinstance(tile, TlExplosion):
-         stages.current.map.place(TlExplosion(self.x, self.y, self.z)
-                                     .with_leftover(self._pick_drop()))
+         stages.current.map.place(TlExplosion(self.x, self.y, self.z,
+                                              leftover = self._pick_drop()))
 
       return False
 
@@ -96,7 +96,7 @@ class TlBush(BreakableTile):
       super().on_overlapped(tile)
 
       if isinstance(tile, TlPlayer):
-         tile.hide_in_bush()
+         tile.entering_bush.setup(True)
          return True
 
       return False
@@ -132,17 +132,13 @@ class TlRuPass(Tile):
 #-----------------------------------------------------------------------------#
 
 class TlExplosion(Tile):
-   def __init__(self, x, y, z):
+   def __init__(self, x, y, z, **params):
       super().__init__(x, y, z)
 
-      self.leftover = None
+      self.leftover = params.get("leftover", None)
       
       self._sprite = Animation("gfx/explosion_%d.png" % k for k in range(8))
       self._sprite.on_end = self._free
-
-   def with_leftover(self, leftover):
-      self.leftover = leftover
-      return self
 
    #
 
@@ -159,27 +155,28 @@ class TlExplosion(Tile):
 #-----------------------------------------------------------------------------#
 
 class TlBomb(Tile):
-   _SOUND = Sound("sfx/bomb.wav")
+   _SOUND     = Sound("sfx/bomb.wav")
 
    #
 
-   def __init__(self, x, y, z):
+   def __init__(self, x, y, z, **params):
       super().__init__(x, y, z)
 
-      self._strength = 2
+      self._strength = params.get("strength", 2)
+      self._in_bush  = params.get("in_bush", False)
       
-      self._sprite = \
-         Animation("gfx/bomb_%d.png" % k for k in list(range(7))           + 
-                                                  list(reversed(range(7))) +
-                                                  list(range(7))           + 
-                                                  list(reversed(range(7))) +
-                                                  list(range(7))           )
+      if self._in_bush:
+         self._sprite = Image("gfx/bomb_bush.png")
+
+      else:
+         self._sprite = \
+            Animation("gfx/bomb_%d.png" % k for k in list(range(7))           + 
+                                                     list(reversed(range(7))) +
+                                                     list(range(7))           + 
+                                                     list(reversed(range(7))) +
+                                                     list(range(7))           )
 
       self._sprite.on_end = self.explode
-
-   def with_strength(self, strength):
-      self._strength = strength
-      return self
 
    #
 
@@ -187,8 +184,11 @@ class TlBomb(Tile):
       if isinstance(tile, TlExplosion):
          self.explode()
       
-      elif isinstance(tile, TlCrate):
+      elif isinstance(tile, TlCrate) and not self._in_bush:
          return self.move(self.x - tile.x, self.y - tile.y)
+      
+      elif isinstance(tile, TlPlayer) and self._in_bush:
+         self.explode()
       
       return False
 
@@ -207,28 +207,9 @@ class TlBomb(Tile):
 
 #-----------------------------------------------------------------------------#
 
-class TlBombBush(Tile):
-   _sprite = Image("gfx/bomb_bush.png")
-
-   #
-
-   def __init__(self, x, y, z):
-      super().__init__(x, y, z)
-
-   #
-
-   def on_overlapped(self, tile):
-      if isinstance(tile, TlPlayer):
-         tile.kill()
-         return True
-
-      return False
-
-#-----------------------------------------------------------------------------#
-
 class TlPlayer(Tile):
    _BUSH_SPRITE = Image("gfx/player_bush.png")
-   _SLOWNESS = 0.18
+   _SLOWNESS    = 0.18
 
    #
 
@@ -236,14 +217,17 @@ class TlPlayer(Tile):
       super().__init__(x, y, z)
       
       self.bomb_strength = 2
+      self.bomb_cooldown = 1.75
+      self.entering_bush = Trigger(False)
 
-      self._axis          = axis
-      self._bomb_key      = bomb_key
-      self._sprite        = img
+      self._axis     = axis
+      self._bomb_key = bomb_key
+      self._sprite   = img
 
-      self._last_moved_at = 0
-      self._to_put_bomb   = False
-      self._in_bush       = 0
+      self._time_not_moving  = 0
+      self._time_not_bombing = 0
+      self._to_put_bomb      = Trigger(False)
+      self._in_bush          = Trigger(False)
 
    #
 
@@ -256,28 +240,29 @@ class TlPlayer(Tile):
       return False
    
    def on_update(self, dt):
-      self._last_moved_at += dt
+      self._time_not_moving  += dt
+      self._time_not_bombing += dt
 
-      was_on_bush = self._in_bush
+      if  self._time_not_moving >= self._SLOWNESS \
+      and self.move(self._axis.x, self._axis.y):
+         self._time_not_moving = 0
 
-      if  self._last_moved_at >= self._SLOWNESS \
-      and self.move(self._axis.x, self._axis.y) :
-         self._last_moved_at = 0
+         if  self._to_put_bomb.trigger()                 \
+         and self._time_not_bombing >= self.bomb_cooldown:
+            self._time_not_bombing = 0
 
-         if was_on_bush:
-            self._in_bush -= 1
+            stages.current.map.place(
+               TlBomb(self.x - self._axis.x, self.y - self._axis.y, self.z,
+                      strength = self.bomb_strength,
+                      in_bush  = self._in_bush.trigger()))
 
+         elif self._in_bush.trigger():
             stages.current.map.place(TlBush(self.x - self._axis.x, 
                                             self.y - self._axis.y, 
                                             self.z))
-         
-         if self._to_put_bomb:
-            self._to_put_bomb = False
 
-            stages.current.map.place(TlBomb(self.x - self._axis.x,
-                                            self.y - self._axis.y,
-                                            self.z)
-                                        .with_strength(self.bomb_strength))
+         if self.entering_bush.trigger():
+            self._in_bush.setup(True)
 
    def on_draw(self, dt):
       if self._in_bush:
@@ -289,13 +274,11 @@ class TlPlayer(Tile):
    def on_key_event(self, key, state):
       self._axis.react_to_key(key, state)
 
-      if key == self._bomb_key and state and not self._in_bush:
-         self._to_put_bomb = True
+      if key == self._bomb_key and state:
+         self._to_put_bomb.setup(True)
 
    #
 
    def kill(self):
       self._sprite = Animation("gfx/dying_%d.png" % k for k in range(5))
-
-   def hide_in_bush(self):
-      self._in_bush += 1
+      self._sprite.on_end = stages.current.game_over
