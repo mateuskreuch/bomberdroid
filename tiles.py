@@ -67,8 +67,9 @@ class BreakableTile(Tile):
    def _pick_drop(self):
       chance = random.random()
 
-      if chance <= 0.5: return TlRuPass(-1, -1, -1)
-      else:             return None
+      if   chance <= 0.20: return TlRuPass(-1, -1, -1)
+      elif chance <= 0.55: return TlCoffee(-1, -1, -1)
+      else:                return None
 
 #-----------------------------------------------------------------------------#
 
@@ -126,6 +127,19 @@ class TlRuPass(Tile):
    def on_overlapped(self, tile):
       if isinstance(tile, TlPlayer):
          tile.bomb_strength += 1
+      
+      return True
+
+#-----------------------------------------------------------------------------#
+
+class TlCoffee(Tile):
+   _sprite = Image("gfx/coffee.png")
+
+   #
+
+   def on_overlapped(self, tile):
+      if isinstance(tile, TlPlayer):
+         tile.bomb_cooldown *= 0.90
       
       return True
 
@@ -208,11 +222,23 @@ class TlBomb(Tile):
 #-----------------------------------------------------------------------------#
 
 class TlPlayer(Tile):
+   _SPRITES = {
+      "a": {
+         "normal": Animation("gfx/player_a_%d.png" % k for k in (0, 1)),
+         "nobomb": Animation("gfx/player_a_nobomb_%d.png" % k for k in (0, 1)),
+         "bush"  : Image("gfx/player_bush.png"),
+      },
+      "b": {
+         "normal": Animation("gfx/player_b_%d.png" % k for k in (0, 1)),
+         "nobomb": Animation("gfx/player_b_nobomb_%d.png" % k for k in (0, 1)),
+         "bush"  : Image("gfx/player_bush.png"),
+      }
+   }
    _SLOWNESS    = 0.18
 
    #
 
-   def __init__(self, x, y, z, img, axis, bomb_key):
+   def __init__(self, x, y, z, id, axis, bomb_key):
       super().__init__(x, y, z)
       
       self.bomb_strength = 2
@@ -221,23 +247,18 @@ class TlPlayer(Tile):
 
       self._axis        = axis
       self._bomb_key    = bomb_key
-      self._sprite      = img
-      self._bush_sprite = Image("gfx/player_bush.png")
+      self._id          = id
 
       self._time_not_moving  = self._SLOWNESS
       self._time_not_bombing = self.bomb_cooldown
       self._to_put_bomb      = Trigger(False)
       self._in_bush          = Trigger(False)
 
-      self._in_bush.on_trigger = self._switch_sprites
-      self._in_bush.on_arm     = self._switch_sprites
-
    #
 
    def on_overlapped(self, tile):
       if isinstance(tile, TlExplosion):
-         self.kill()
-         tile.leftover = self
+         tile.leftover = TlDeadPlayer(self.x, self.y, self.z)
          return True
 
       return False
@@ -267,19 +288,36 @@ class TlPlayer(Tile):
          if self.entering_bush.trigger():
             self._in_bush.arm()
 
+   def on_draw(self, dt):
+      sprite = self._SPRITES[self._id]["normal"]
+
+      if self._in_bush:
+         sprite = self._SPRITES[self._id]["bush"]
+
+      elif self._time_not_bombing < self.bomb_cooldown:
+         sprite = self._SPRITES[self._id]["nobomb"]
+
+      sprite.draw(self.x * lib.TILE_SIZE, self.y * lib.TILE_SIZE, dt)
+
    def on_key_event(self, key, state):
       self._axis.react_to_key(key, state)
 
       if key == self._bomb_key and state:
          self._to_put_bomb.arm()
 
-   #
+#-----------------------------------------------------------------------------#
 
-   def kill(self):
+class TlDeadPlayer(Tile):
+   def __init__(self, x, y, z):
+      super().__init__(x, y, z)
+
       self._sprite = Animation("gfx/dying_%d.png" % k for k in range(5))
-      self._sprite.on_end = stages.current.game_over
+      self._time_elapsed = 0
 
    #
 
-   def _switch_sprites(self):
-      self._sprite, self._bush_sprite = self._bush_sprite, self._sprite
+   def on_update(self, dt):
+      self._time_elapsed += dt
+
+      if self._time_elapsed >= 1.5:
+         stages.current.game_over()

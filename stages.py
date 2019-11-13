@@ -75,13 +75,13 @@ class Arena(Stage):
 
       self.map.place(
          TlPlayer(1, 1, 1,
-                  Animation("gfx/player_a_%d.png" % k for k in range(2)),
+                  "a",
                   Axis(K_w, K_a, K_s, K_d),
                   K_v))
 
       self.map.place(
          TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
-                  Animation("gfx/player_b_%d.png" % k for k in range(2)),
+                  "b",
                   Axis(K_UP, K_LEFT, K_DOWN, K_RIGHT),
                   K_KP3))
 

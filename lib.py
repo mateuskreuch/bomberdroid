@@ -144,26 +144,14 @@ class Trigger:
 
    #
 
-   def on_trigger(self):
-      pass
-
-   def on_arm(self):
-      pass
-   
-   #
-
    def trigger(self):
       if self._state:
          self._state = False
-         self.on_trigger()
          return True
 
       return False
 
    def arm(self):
-      if not self._state:
-         self.on_arm()
-
       self._state = True
 
 #-----------------------------------------------------------------------------#
