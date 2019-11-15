@@ -28,14 +28,11 @@ class Image:
 #-----------------------------------------------------------------------------#
 
 class Animation(Image):
-   _SECONDS_PER_FRAME = 0.05
-
-   #
-
-   def __init__(self, paths):
-      self._time_counter = 0
-      self._at_frame     = 0
-      self._surfaces     = []
+   def __init__(self, paths, seconds_per_frame = 0.05):
+      self._time_counter      = 0
+      self._at_frame          = 0
+      self._surfaces          = []
+      self._seconds_per_frame = seconds_per_frame
 
       for path in paths:
          self._surfaces.append(self._load_or_create_sprite(path))
@@ -52,7 +49,7 @@ class Animation(Image):
    def draw(self, x, y, dt):
       self._time_counter += dt
 
-      if self._time_counter >= self._SECONDS_PER_FRAME:
+      if self._time_counter >= self._seconds_per_frame:
          self._time_counter = 0
          self._at_frame += 1
 
@@ -186,6 +183,8 @@ class Axis:
          elif self._l_pressed: self.x, self.y = -1,  0
          elif self._d_pressed: self.x, self.y =  0,  1
          elif self._r_pressed: self.x, self.y =  1,  0
+
+#-----------------------------------------------------------------------------#
 
 #-----------------------------------------------------------------------------#
 

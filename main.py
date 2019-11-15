@@ -13,13 +13,15 @@
 import pygame
 
 pygame.init()
-pygame.display.set_caption("Bombescii")
+pygame.display.set_caption("BomberDroid")
 pygame.mixer.init()
 
 import lib, stages
 from pygame.locals import *
 
-stages.current = stages.GrassArena()
+pygame.display.set_icon(pygame.image.load(lib.DIR + "gfx/bomb_0.png"))
+
+stages.current = stages.MainMenu()
 
 clock   = pygame.time.Clock()
 running = True

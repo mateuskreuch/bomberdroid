@@ -224,8 +224,8 @@ class TlBomb(Tile):
 class TlPlayer(Tile):
    _SPRITES = {
       "a": {
-         "normal": Animation("gfx/player_a_%d.png" % k for k in (0, 1)),
-         "nobomb": Animation("gfx/player_a_nobomb_%d.png" % k for k in (0, 1)),
+         "normal": Animation(("gfx/player_a_%d.png" % k for k in (0, 1)), 0.1),
+         "nobomb": Animation(("gfx/player_a_nobomb_%d.png" % k for k in (0, 1)), 0.1),
          "bush"  : Image("gfx/player_bush.png"),
       },
       "b": {
@@ -308,6 +308,10 @@ class TlPlayer(Tile):
 #-----------------------------------------------------------------------------#
 
 class TlDeadPlayer(Tile):
+   _TIME_TO_RESTART = 1.5
+
+   #
+
    def __init__(self, x, y, z):
       super().__init__(x, y, z)
 
@@ -319,5 +323,5 @@ class TlDeadPlayer(Tile):
    def on_update(self, dt):
       self._time_elapsed += dt
 
-      if self._time_elapsed >= 1.5:
+      if self._time_elapsed >= self._TIME_TO_RESTART:
          stages.current.game_over()

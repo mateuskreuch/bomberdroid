@@ -3,7 +3,7 @@
 
 import random
 from pygame.locals import *
-from lib           import TileMap
+from lib           import TileMap, Image
 from tiles         import *
 
 #-----------------------------------------------------------------------------#
@@ -21,7 +21,18 @@ class Stage:
 #-----------------------------------------------------------------------------#
 
 class MainMenu(Stage):
-   pass
+   _BACKGROUND = Image("gfx/main_menu.png")
+   
+   #
+
+   def on_draw(self, dt):
+      self._BACKGROUND.draw(0, 0)
+
+   def on_key_event(self, key, state):
+      global current
+
+      if key == K_RETURN:
+         current = GrassArena()   
 
 #-----------------------------------------------------------------------------#
 
@@ -77,13 +88,13 @@ class Arena(Stage):
          TlPlayer(1, 1, 1,
                   "a",
                   Axis(K_w, K_a, K_s, K_d),
-                  K_v))
+                  K_SPACE))
 
       self.map.place(
          TlPlayer(self.map.cols - 2, self.map.rows - 2, 1,
                   "b",
                   Axis(K_UP, K_LEFT, K_DOWN, K_RIGHT),
-                  K_KP3))
+                  K_KP_ENTER))
 
 #-----------------------------------------------------------------------------#
 
@@ -106,7 +117,7 @@ class GrassArena(Arena):
       
          elif random.random() <= self._GEN_NOISE or self._is_lock_tile(x, y):
             self.map.place(random.choice(self._BREAKABLE_TILES)(x, y, z))
-
+   
 #-----------------------------------------------------------------------------#
 
 current = None
