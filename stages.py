@@ -1,7 +1,7 @@
 # This file contains the stages of the game.
 # Stages are also commonly known as states or screens.
 
-import random
+import random, lib
 from pygame.locals import *
 from lib           import TileMap, Image
 from tiles         import *
@@ -42,10 +42,12 @@ class Arena(Stage):
    #
 
    def __init__(self):
-      self.map = TileMap(lib.MAP_SIZE_X, lib.MAP_SIZE_Y, 2)
-
       self.on_generation()
-      self._place_players()
+
+      self._health_bar = {
+         "a": Animation("gfx/health_bar_%d.png", range(4), float("inf")),
+         "b": Animation("gfx/health_bar_%d.png", range(4), float("inf"))
+      }
 
    #
 
@@ -55,6 +57,11 @@ class Arena(Stage):
    def on_draw(self, dt):
       for tile in self.map: tile.on_draw(dt)
 
+      self._health_bar["a"].draw(6, 6, dt)
+      self._health_bar["b"].draw(lib.SCREEN_SIZE_X - 37 - 6, 
+                                 lib.SCREEN_SIZE_Y - 16 - 6, 
+                                 dt)
+
    def on_key_event(self, key, state):
       for tile in self.map: tile.on_key_event(key, state)
 
@@ -63,23 +70,7 @@ class Arena(Stage):
 
    #
 
-   def game_over(self):
-      self.__init__()
-
-   #
-
-   def _is_border_tile(self, x, y):
-      return x == 0                 or y == 0                 or \
-             x == self.map.cols - 1 or y == self.map.rows - 1 or \
-             (x % 2 == 0 and y % 2 == 0)
-
-   def _is_lock_tile(self, x, y):
-      return (x == 3                 and y == 1                ) or \
-             (x == 1                 and y == 3                ) or \
-             (x == self.map.cols - 4 and y == self.map.rows - 2) or \
-             (x == self.map.cols - 2 and y == self.map.rows - 4)
-
-   def _place_players(self):
+   def place_players(self):
       for x, y in ((1, 1), (2, 1), (1, 2)):
          self.map.remove(x                    , y                    , 1)
          self.map.remove(self.map.cols - 1 - x, self.map.rows - 1 - y, 1)
@@ -96,6 +87,30 @@ class Arena(Stage):
                   Axis(K_UP, K_LEFT, K_DOWN, K_RIGHT),
                   K_KP_ENTER))
 
+   def player_lost(self, id):
+      global current
+
+      self.on_generation()
+
+      if self._health_bar[id].at_frame == 3:
+         current = MainMenu()
+
+   def decrease_health(self, id):
+      self._health_bar[id].at_frame += 1
+
+   #
+
+   def _is_border_tile(self, x, y):
+      return x == 0                 or y == 0                 or \
+             x == self.map.cols - 1 or y == self.map.rows - 1 or \
+             (x % 2 == 0 and y % 2 == 0)
+
+   def _is_lock_tile(self, x, y):
+      return (x == 3                 and y == 1                ) or \
+             (x == 1                 and y == 3                ) or \
+             (x == self.map.cols - 4 and y == self.map.rows - 2) or \
+             (x == self.map.cols - 2 and y == self.map.rows - 4)
+
 #-----------------------------------------------------------------------------#
 
 class GrassArena(Arena):
@@ -108,6 +123,8 @@ class GrassArena(Arena):
    #
 
    def on_generation(self):
+      self.map = TileMap(lib.MAP_SIZE_X, lib.MAP_SIZE_Y, 2)
+
       for x, y, z in self.map.traverse():
          if z == 0:
             self.map.place(TlGrass(x, y, z))
@@ -117,6 +134,8 @@ class GrassArena(Arena):
       
          elif random.random() <= self._GEN_NOISE or self._is_lock_tile(x, y):
             self.map.place(random.choice(self._BREAKABLE_TILES)(x, y, z))
+      
+      self.place_players()
    
 #-----------------------------------------------------------------------------#
 

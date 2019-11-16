@@ -151,7 +151,7 @@ class TlExplosion(Tile):
 
       self.leftover = params.get("leftover", None)
       
-      self._sprite = Animation("gfx/explosion_%d.png" % k for k in range(8))
+      self._sprite = Animation("gfx/explosion_%d.png", range(8))
       self._sprite.on_end = self._free
 
    #
@@ -184,11 +184,11 @@ class TlBomb(Tile):
 
       else:
          self._sprite = \
-            Animation("gfx/bomb_%d.png" % k for k in list(range(7))           + 
-                                                     list(reversed(range(7))) +
-                                                     list(range(7))           + 
-                                                     list(reversed(range(7))) +
-                                                     list(range(7))           )
+            Animation("gfx/bomb_%d.png", list(range(7))           + 
+                                         list(reversed(range(7))) +
+                                         list(range(7))           + 
+                                         list(reversed(range(7))) +
+                                         list(range(7))           )
 
       self._sprite.on_end = self.explode
 
@@ -224,17 +224,17 @@ class TlBomb(Tile):
 class TlPlayer(Tile):
    _SPRITES = {
       "a": {
-         "normal": Animation(("gfx/player_a_%d.png" % k for k in (0, 1)), 0.1),
-         "nobomb": Animation(("gfx/player_a_nobomb_%d.png" % k for k in (0, 1)), 0.1),
+         "normal": Animation("gfx/player_a_%d.png", (0, 1), 0.1),
+         "nobomb": Animation("gfx/player_a_nobomb_%d.png", (0, 1), 0.1),
          "bush"  : Image("gfx/player_bush.png"),
       },
       "b": {
-         "normal": Animation("gfx/player_b_%d.png" % k for k in (0, 1)),
-         "nobomb": Animation("gfx/player_b_nobomb_%d.png" % k for k in (0, 1)),
+         "normal": Animation("gfx/player_b_%d.png", (0, 1), 0.1),
+         "nobomb": Animation("gfx/player_b_nobomb_%d.png", (0, 1), 0.1),
          "bush"  : Image("gfx/player_bush.png"),
       }
    }
-   _SLOWNESS    = 0.18
+   _SLOWNESS    = 0.19
 
    #
 
@@ -258,7 +258,7 @@ class TlPlayer(Tile):
 
    def on_overlapped(self, tile):
       if isinstance(tile, TlExplosion):
-         tile.leftover = TlDeadPlayer(self.x, self.y, self.z)
+         tile.leftover = TlDeadPlayer(self.x, self.y, self.z, self._id)
          return True
 
       return False
@@ -312,11 +312,14 @@ class TlDeadPlayer(Tile):
 
    #
 
-   def __init__(self, x, y, z):
+   def __init__(self, x, y, z, id):
       super().__init__(x, y, z)
 
-      self._sprite = Animation("gfx/dying_%d.png" % k for k in range(5))
+      self._sprite = Animation("gfx/dying_%d.png", range(5))
       self._time_elapsed = 0
+      self._id = id
+
+      stages.current.decrease_health(id)
 
    #
 
@@ -324,4 +327,4 @@ class TlDeadPlayer(Tile):
       self._time_elapsed += dt
 
       if self._time_elapsed >= self._TIME_TO_RESTART:
-         stages.current.game_over()
+         stages.current.player_lost(self._id)
