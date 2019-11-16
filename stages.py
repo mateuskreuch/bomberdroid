@@ -57,9 +57,9 @@ class Arena(Stage):
    def on_draw(self, dt):
       for tile in self.map: tile.on_draw(dt)
 
-      self._health_bar["a"].draw(6, 6, dt)
-      self._health_bar["b"].draw(lib.SCREEN_SIZE_X - 37 - 6, 
-                                 lib.SCREEN_SIZE_Y - 16 - 6, 
+      self._health_bar["a"].draw(6, 5, dt)
+      self._health_bar["b"].draw(lib.SCREEN_SIZE_X - 37 - 4, 
+                                 lib.SCREEN_SIZE_Y - 16 - 4, 
                                  dt)
 
    def on_key_event(self, key, state):
