@@ -13,13 +13,17 @@
 import pygame
 
 pygame.init()
-pygame.display.set_caption("BomberDroid")
 pygame.mixer.init()
 
 import lib, stages
 from pygame.locals import *
 
+pygame.display.set_caption("BomberDroid")
 pygame.display.set_icon(pygame.image.load(lib.DIR + "gfx/bomb_0.png"))
+
+music = pygame.mixer.Sound(lib.DIR + "sfx/music.wav")
+music.set_volume(0.2)
+music.play(-1)
 
 stages.current = stages.MainMenu()
 
