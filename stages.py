@@ -31,8 +31,26 @@ class MainMenu(Stage):
    def on_key_event(self, key, state):
       global current
 
-      if key == K_RETURN:
-         current = GrassArena()   
+      if key == K_RETURN and state == 0:
+         current = GrassArena()
+
+#-----------------------------------------------------------------------------#
+
+class WinInfo(Stage):
+   def __init__(self, id):
+      if id == "a": self._background = Image("gfx/won_player_b.png")
+      else:         self._background = Image("gfx/won_player_a.png")
+   
+   #
+
+   def on_draw(self, dt):
+      self._background.draw(0, 0)
+
+   def on_key_event(self, key, state):
+      global current
+
+      if key == K_RETURN and state == 0:
+         current = MainMenu()
 
 #-----------------------------------------------------------------------------#
 
@@ -93,7 +111,7 @@ class Arena(Stage):
       self.on_generation()
 
       if self._health_bar[id].at_frame == 3:
-         current = MainMenu()
+         current = WinInfo(id)
 
    def decrease_health(self, id):
       self._health_bar[id].at_frame += 1
